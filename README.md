@@ -44,18 +44,18 @@ transactions:
 
 1. **The legal trade.** swap-runner moves 1,200 tUSDC through dex-alpha; the
    Gate walks license → scope → venue → cap and lets it pass.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x73139ffef4e5d2f38692cad5cd70e9b529ab29f0911e1d55c0e7ff79775474d1)
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0xafdb0e58f9ef5eef63cec48c8f2a494eff21205ab34382568fb30b6fe85e2749)
 2. **The cap refusal.** The same agent asks for 4,500 with 3,800 left in its
    day budget — refused, on-chain, in public.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x28b416e0c134a98b9fdcf2baa183fd8f0cf8527cbc8d2453c1038498bb1e9eb4)
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0xca39a90cb8ff47ec815e507b8b403aa7b0abeac2e493e43f318bd680ae5459fc)
 3. **The injection.** A prompt-injected yield-scout aims 800 tUSDC at the
    attacker's venue — `VenueNotAllowed`.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x7c77a8205405a9e40f8a1a2ca0289fa99985b59a4e35932da044988894ae71f1)
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0xe25cfaa4748c502ed738196b46b428aeb5cf5dd3bd14b6fcd0a54ff3ebcc734d)
 4. **The verdict.** The Sentinel flags yield-scout with a hash-anchored reason;
    license 3 is Revoked in one transaction.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0xca9c0ab9a98a4ea91f8bdba6b7895e52f7a82866e6ca71aaee902b9a05c335b9)
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x7efd2f6ec177c9c16660292c2c43c6fde8ca50b79f7d27ebd979494b026e2c45)
 5. **The ghost.** The revoked agent tries once more — refused, forever.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x96fa05c937652f86171d47a6d51c1845038030319dd257c3a55204fec4b6c794)
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x5cb705307fc4dc9914d9f4142e1d69c4ad35cbbd743f87c829ea7bce82eed257)
 
 Anyone can read the revoked license, right now:
 

@@ -202,11 +202,11 @@
     "licenseById3": {
       "principal": "0xd3eB4F8a53a16D12c6F144199a7a02Bc248485db",
       "agent": "0x61097FE1DcE028c55C69F02493879bca97433255",
-      "expiry": 1792654802,
+      "expiry": 1792699724,
       "scope": "yield",
       "status": "Revoked (2)"
     },
-    "readCmd": "cast call 0x8CD2BA803a17386B7E702d2aAc3ab19BCd481d93 'licenseById(uint256)((address,address,uint64,bytes32,uint8))' 3 --rpc-url https://sepolia-rpc.giwa.io"
+    "readCmd": "cast call 0x08b2233C84C1418118AF66F23Bc07Cee1C26C9c1 'licenseById(uint256)((address,address,uint64,bytes32,uint8))' 3 --rpc-url https://sepolia-rpc.giwa.io"
   },
   "eas": {
     "easPredeploy": "0x4200000000000000000000000000000000000021",

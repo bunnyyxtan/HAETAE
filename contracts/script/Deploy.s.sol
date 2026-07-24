@@ -51,13 +51,18 @@ contract Deploy is Script {
         uint256 deployerPk = vm.envUint("DEPLOYER_PK");
         address deployer = vm.addr(deployerPk);
         address watcher = vm.envAddress("SENTINEL_ADDR");
-        // HAETAE lane bindings: schema UID registered in the step-3 ceremony,
-        // attester is the fresh dedicated key (never the deployer — key law).
-        bytes32 haetaeSchemaUid = vm.envBytes32("HAETAE_SCHEMA_UID");
-        address haetaeAttester = vm.envAddress("HAETAE_ATTESTER_ADDR");
         // IS_DEMO=true keeps the always-true DemoVerifier on the license gate
         // (demo window only); default is the real dual-lane adapter.
         bool isDemo = vm.envOr("IS_DEMO", false);
+        // HAETAE lane bindings: schema UID registered in the step-3 ceremony,
+        // attester is the fresh dedicated key (never the deployer — key law).
+        // envOr so a demo-mode run cannot fail on missing lane-2 env; zero
+        // values simply leave the adapter's HAETAE lane disabled.
+        bytes32 haetaeSchemaUid = vm.envOr("HAETAE_SCHEMA_UID", bytes32(0));
+        address haetaeAttester = vm.envOr("HAETAE_ATTESTER_ADDR", address(0));
+        if (!isDemo && (haetaeSchemaUid == bytes32(0) || haetaeAttester == address(0))) {
+            revert("live deploy requires HAETAE_SCHEMA_UID and HAETAE_ATTESTER_ADDR");
+        }
 
         vm.startBroadcast(deployerPk);
 
