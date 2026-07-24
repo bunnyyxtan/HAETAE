@@ -13,10 +13,12 @@ import Marquee from "@/components/landing/Marquee";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
 import { useLenis } from "@/hooks/useLenis";
-import { isConsoleRoute, saveScroll, getSavedScroll, type RouteKey } from "@/utils/path";
+import { isConsoleRoute, isVerifyRoute, saveScroll, getSavedScroll, type RouteKey } from "@/utils/path";
 
 // Lazy console chunk: wagmi/viem ride with the console, not the landing.
 const ConsoleApp = lazy(() => import("./console/ConsoleApp"));
+// Wallet-free public verify surface — same lazy chunk boundary.
+const VerifyPage = lazy(() => import("./console/VerifyPage"));
 
 function App() {
     useLenis();
@@ -26,7 +28,9 @@ function App() {
     const pendingRestore = useRef<number | null>(null);
 
     const [route, setRoute] = useState<RouteKey>(() => {
-        return isConsoleRoute(window.location.pathname) ? "console" : "landing";
+        const p = window.location.pathname;
+        if (isVerifyRoute(p)) return "verify"; // check first: /verify/ nests under the console prefix
+        return isConsoleRoute(p) ? "console" : "landing";
     });
 
     useEffect(() => {
@@ -41,7 +45,12 @@ function App() {
             window.history.scrollRestoration = "manual";
         }
         const onPopState = (e: PopStateEvent) => {
-            const nextRoute = isConsoleRoute(window.location.pathname) ? "console" : "landing";
+            const p = window.location.pathname;
+            const nextRoute: RouteKey = isVerifyRoute(p)
+                ? "verify"
+                : isConsoleRoute(p)
+                  ? "console"
+                  : "landing";
             const prev = routeRef.current;
             if (prev === nextRoute) return;
             const synthetic = e.state?.synthetic === true;
@@ -53,7 +62,7 @@ function App() {
             if (nextRoute === "landing") {
                 pendingRestore.current = getSavedScroll("landing");
             } else {
-                pendingRestore.current = synthetic ? null : getSavedScroll("console");
+                pendingRestore.current = synthetic ? null : getSavedScroll(nextRoute);
             }
             routeRef.current = nextRoute;
             setRoute(nextRoute);
@@ -98,6 +107,14 @@ function App() {
             cancelled = true;
         };
     }, [route]);
+
+    if (route === "verify") {
+        return (
+            <Suspense fallback={null}>
+                <VerifyPage />
+            </Suspense>
+        );
+    }
 
     if (route === "console") {
         return (

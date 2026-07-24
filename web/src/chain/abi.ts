@@ -7,16 +7,28 @@ export const licenseAbi = parseAbi([
     "function totalSupply() view returns (uint256)",
     "function tokenByIndex(uint256 index) view returns (uint256)",
     "function licenseById(uint256 id) view returns ((address principal, address agent, uint64 expiry, bytes32 scope, uint8 status))",
+    "function licenseOf(address agent) view returns ((address principal, address agent, uint64 expiry, bytes32 scope, uint8 status))",
+    "function isLicensed(address agent) view returns (bool)",
+    "function mint(address agent, uint64 expiry, bytes32 scope) returns (uint256)",
     "function revoke(address agent)",
     "error NotLicensed()",
     "error NotAuthorized()",
     "error AlreadyRevoked()",
+    "error AlreadyLicensed(address agent)",
+    "error NotVerified(address principal)",
+    "error ZeroAddress()",
+    "error InvalidExpiry()",
 ]);
 
 export const policyAbi = parseAbi([
     "function capPerDay(address agent, address token) view returns (uint256)",
     "function remainingToday(address agent, address token) view returns (uint256)",
+    "function spentToday(address agent, address token) view returns (uint256)",
     "function isVenueAllowed(address agent, address venue) view returns (bool)",
+    "function setCap(address agent, address token, uint256 capPerDay)",
+    "function setVenue(address agent, address venue, bool allowed)",
+    "error LicenseNotActive()",
+    "error NotPrincipal()",
 ]);
 
 export const licensedEvent = parseAbiItem(

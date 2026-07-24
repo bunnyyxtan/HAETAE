@@ -135,6 +135,7 @@ export interface CourtEvent {
     txHash: string;
     logIndex: number;
     agent: string; // checksummed agent address the event binds
+    licenseId?: number; // "licensed" events only: the id minted by that event
 }
 
 // All five HAETAE events index the agent; absent args only occur on malformed
@@ -199,6 +200,7 @@ function toCourtEvents(
             txHash: l.transactionHash,
             logIndex: l.logIndex,
             agent: evAgent(l.args.agent),
+            licenseId: l.args.licenseId !== undefined ? Number(l.args.licenseId) : undefined,
         })),
         ...rev.map((l): CourtEvent => ({
             kind: "revoked",
@@ -257,4 +259,125 @@ export function watchBlockTicker(onBlock: (block: number) => void): () => void {
             /* transient RPC hiccups: keep the last block on screen */
         },
     });
+}
+
+// ---------------------------------------------------------------------------
+// Operator-loop reads: per-agent policy detail, license summary, and the
+// wallet-free verify report. Same multicall/batching discipline as above.
+// ---------------------------------------------------------------------------
+
+export interface PolicyDetail {
+    capPerDay: number; // tUSDC whole units (6 decimals stripped)
+    remainingToday: number;
+    spentToday: number;
+    venues: { name: string; address: string; allowed: boolean }[];
+}
+
+export async function fetchPolicyDetail(agentAddr: string): Promise<PolicyDetail> {
+    const agent = getAddress(agentAddr);
+    const token = addresses.usdc;
+    const [cap, remaining, spent, venueFlags] = await Promise.all([
+        publicClient.readContract({ address: addresses.policy, abi: policyAbi, functionName: "capPerDay", args: [agent, token] }),
+        publicClient.readContract({ address: addresses.policy, abi: policyAbi, functionName: "remainingToday", args: [agent, token] }),
+        publicClient.readContract({ address: addresses.policy, abi: policyAbi, functionName: "spentToday", args: [agent, token] }),
+        Promise.all(
+            venueList.map((v) =>
+                publicClient.readContract({
+                    address: addresses.policy,
+                    abi: policyAbi,
+                    functionName: "isVenueAllowed",
+                    args: [agent, v.address],
+                }),
+            ),
+        ),
+    ]);
+    return {
+        capPerDay: Number(cap / 1_000_000n),
+        remainingToday: Number(remaining / 1_000_000n),
+        spentToday: Number(spent / 1_000_000n),
+        venues: venueList.map((v, i) => ({ name: v.name, address: v.address, allowed: venueFlags[i] })),
+    };
+}
+
+// Custom-token cap/remaining: decimals unknown for arbitrary tokens, so raw
+// base units go back to the caller, which labels them honestly as raw.
+export async function fetchTokenPolicy(
+    agentAddr: string,
+    tokenAddr: string,
+): Promise<{ cap: bigint; remaining: bigint; spent: bigint }> {
+    const agent = getAddress(agentAddr);
+    const token = getAddress(tokenAddr);
+    const [cap, remaining, spent] = await Promise.all([
+        publicClient.readContract({ address: addresses.policy, abi: policyAbi, functionName: "capPerDay", args: [agent, token] }),
+        publicClient.readContract({ address: addresses.policy, abi: policyAbi, functionName: "remainingToday", args: [agent, token] }),
+        publicClient.readContract({ address: addresses.policy, abi: policyAbi, functionName: "spentToday", args: [agent, token] }),
+    ]);
+    return { cap, remaining, spent };
+}
+
+export async function fetchVenueAllowed(agentAddr: string, venueAddr: string): Promise<boolean> {
+    return publicClient.readContract({
+        address: addresses.policy,
+        abi: policyAbi,
+        functionName: "isVenueAllowed",
+        args: [getAddress(agentAddr), getAddress(venueAddr)],
+    });
+}
+
+export interface LicenseSummary {
+    licensed: boolean; // isLicensed(): Active AND unexpired
+    principal: string | null;
+    expiryUnix: number | null;
+    scope: string | null;
+    statusCode: number | null; // 1 Active, 2 Revoked; null = never licensed
+}
+
+export async function fetchLicenseSummary(agentAddr: string): Promise<LicenseSummary> {
+    const agent = getAddress(agentAddr);
+    const licensed = await publicClient.readContract({
+        address: addresses.license,
+        abi: licenseAbi,
+        functionName: "isLicensed",
+        args: [agent],
+    });
+    try {
+        const rec = await publicClient.readContract({
+            address: addresses.license,
+            abi: licenseAbi,
+            functionName: "licenseOf",
+            args: [agent],
+        });
+        return {
+            licensed,
+            principal: getAddress(rec.principal),
+            expiryUnix: Number(rec.expiry),
+            scope: decodeScope(rec.scope),
+            statusCode: rec.status,
+        };
+    } catch {
+        // licenseOf reverts NotLicensed() only for never-mapped agents.
+        return { licensed: false, principal: null, expiryUnix: null, scope: null, statusCode: null };
+    }
+}
+
+export interface VerifyReport {
+    agent: string; // checksummed
+    summary: LicenseSummary;
+    licenseId: number | null; // latest Licensed event = current id (re-mint remaps)
+    policy: PolicyDetail | null;
+    history: CourtEvent[];
+}
+
+export async function fetchVerifyReport(agentAddr: string): Promise<VerifyReport> {
+    const agent = getAddress(agentAddr);
+    const [summary, history] = await Promise.all([
+        fetchLicenseSummary(agent),
+        fetchCourtRecord(agent),
+    ]);
+    const policy = summary.statusCode !== null ? await fetchPolicyDetail(agent) : null;
+    let licenseId: number | null = null;
+    for (const ev of history) {
+        if (ev.kind === "licensed" && ev.licenseId !== undefined) licenseId = ev.licenseId;
+    }
+    return { agent, summary, licenseId, policy, history };
 }

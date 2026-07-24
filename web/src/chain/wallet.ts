@@ -1,4 +1,4 @@
-import { createWalletClient, getAddress, http, type Hex } from "viem";
+import { createWalletClient, getAddress, http, parseEventLogs, type Hex } from "viem";
 import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
 import {
     connect,
@@ -10,8 +10,9 @@ import {
     watchAccount,
     writeContract,
 } from "wagmi/actions";
-import { licenseAbi } from "./abi";
+import { licenseAbi, licensedEvent, policyAbi } from "./abi";
 import { addresses, RPC_URL } from "./deployment";
+import { decodeHaetaeError } from "./errors";
 import { giwaSepolia, publicClient, wagmiConfig } from "./giwa";
 
 // ---------------------------------------------------------------------------
@@ -133,37 +134,72 @@ export function currentAccount(): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// The revoke path (S04 order Stage B item 2): real tx states — the ceremony
-// shows pending during confirmation and the verdict on receipt.
+// Write paths (S04 revoke; operator-loop mint/setCap/setVenue). Every sender
+// splits the same way: scratch signer bypasses wagmi with a direct wallet
+// client; injected sessions go through wagmi with the chain pinned.
 // ---------------------------------------------------------------------------
+function scratchClient() {
+    if (!scratchAccount) throw new Error("Scratch signer not connected");
+    return createWalletClient({
+        account: scratchAccount,
+        chain: giwaSepolia,
+        transport: http(RPC_URL),
+    });
+}
+
 export async function sendRevoke(agentAddr: string): Promise<Hex> {
     const agent = getAddress(agentAddr);
-    if (scratchActive && scratchAccount) {
-        const walletClient = createWalletClient({
-            account: scratchAccount,
-            chain: giwaSepolia,
-            transport: http(RPC_URL),
-        });
-        return walletClient.writeContract({
-            address: addresses.license,
-            abi: licenseAbi,
-            functionName: "revoke",
-            args: [agent],
-        });
-    }
-    return writeContract(wagmiConfig, {
+    const call = {
         address: addresses.license,
         abi: licenseAbi,
         functionName: "revoke",
         args: [agent],
-        chainId: giwaSepolia.id,
-    });
+    } as const;
+    if (scratchActive && scratchAccount) return scratchClient().writeContract(call);
+    return writeContract(wagmiConfig, { ...call, chainId: giwaSepolia.id });
 }
 
-// Resolves true when the revoke landed successfully, false when it reverted.
+// mint(agent, expiry, scope): permissionless behind the verifier gate — the
+// deployed DemoVerifier passes every address (Dojang stand-in; the UI says so).
+export async function sendMint(agentAddr: string, expiryUnix: number, scopeHex: Hex): Promise<Hex> {
+    const agent = getAddress(agentAddr);
+    const call = {
+        address: addresses.license,
+        abi: licenseAbi,
+        functionName: "mint",
+        args: [agent, BigInt(expiryUnix), scopeHex],
+    } as const;
+    if (scratchActive && scratchAccount) return scratchClient().writeContract(call);
+    return writeContract(wagmiConfig, { ...call, chainId: giwaSepolia.id });
+}
+
+// setCap: capRaw is in the token's base units (tUSDC: 6 decimals).
+export async function sendSetCap(agentAddr: string, tokenAddr: string, capRaw: bigint): Promise<Hex> {
+    const call = {
+        address: addresses.policy,
+        abi: policyAbi,
+        functionName: "setCap",
+        args: [getAddress(agentAddr), getAddress(tokenAddr), capRaw],
+    } as const;
+    if (scratchActive && scratchAccount) return scratchClient().writeContract(call);
+    return writeContract(wagmiConfig, { ...call, chainId: giwaSepolia.id });
+}
+
+export async function sendSetVenue(agentAddr: string, venueAddr: string, allowed: boolean): Promise<Hex> {
+    const call = {
+        address: addresses.policy,
+        abi: policyAbi,
+        functionName: "setVenue",
+        args: [getAddress(agentAddr), getAddress(venueAddr), allowed],
+    } as const;
+    if (scratchActive && scratchAccount) return scratchClient().writeContract(call);
+    return writeContract(wagmiConfig, { ...call, chainId: giwaSepolia.id });
+}
+
+// Resolves true when the tx landed successfully, false when it reverted.
 // Throws on timeout (30s — thirty 1s blocks without inclusion means something
 // is genuinely wrong; the UI unlocks and points at the explorer).
-export async function waitRevoke(hash: Hex): Promise<boolean> {
+export async function waitTx(hash: Hex): Promise<boolean> {
     const receipt = await publicClient.waitForTransactionReceipt({
         hash,
         timeout: 30_000,
@@ -171,23 +207,25 @@ export async function waitRevoke(hash: Hex): Promise<boolean> {
     return receipt.status === "success";
 }
 
+// Historical name kept for the revoke ceremony (S04).
+export const waitRevoke = waitTx;
+
+// Mint wait that also reads the verdict: the Licensed event in the receipt
+// carries the freshly minted licenseId (the ceremony's sealed screen shows it).
+export async function waitMint(hash: Hex): Promise<{ ok: boolean; licenseId: number | null }> {
+    const receipt = await publicClient.waitForTransactionReceipt({
+        hash,
+        timeout: 30_000,
+    });
+    if (receipt.status !== "success") return { ok: false, licenseId: null };
+    const logs = parseEventLogs({ abi: [licensedEvent], logs: receipt.logs });
+    const id = logs[0]?.args.licenseId;
+    return { ok: true, licenseId: id !== undefined ? Number(id) : null };
+}
+
+// One decoder for every failure surface (RULES R4.6): delegate to the shared
+// HAETAE error decoder so wallet rejections and contract reverts read the same
+// everywhere.
 export function walletErrorMessage(err: unknown): string {
-    let cur: unknown = err;
-    while (cur && typeof cur === "object") {
-        const e = cur as { name?: string; code?: number; cause?: unknown };
-        if (e.name === "UserRejectedRequestError" || e.code === 4001) {
-            return "Rejected in wallet.";
-        }
-        cur = e.cause;
-    }
-    const msg = err instanceof Error ? err.message : String(err);
-    for (const name of ["NotAuthorized", "AlreadyRevoked", "NotLicensed"]) {
-        if (msg.includes(name)) {
-            return name === "NotAuthorized"
-                ? "Chain refused: connected wallet is not this license's principal."
-                : `Chain refused: ${name}.`;
-        }
-    }
-    const first = msg.split("\n")[0];
-    return first.length > 90 ? `${first.slice(0, 90)}…` : first;
+    return decodeHaetaeError(err).message;
 }

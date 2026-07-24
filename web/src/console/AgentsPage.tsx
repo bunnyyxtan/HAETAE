@@ -1,32 +1,50 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { agentFixtures, flags, AgentLicense, formatAddress, ledgerFixtures } from "./fixtures";
+import { agentFixtures, flags, AgentLicense, FIXTURE_WALLET, formatAddress, ledgerFixtures } from "./fixtures";
 import { isFixtureMode } from "../chain/mode";
 import { fetchRegistry, fetchLedger } from "../chain/reads";
 import { explorerAddr } from "../chain/deployment";
+import { navigateToVerify } from "../utils/path";
 import PapersModal from "./PapersModal";
+import RevokeModal from "./RevokeModal";
+import PolicyModal from "./PolicyModal";
+import MintModal, { type MintResult } from "./MintModal";
 
 interface Activity {
     count: number;
     lastBlock: number;
 }
 
+interface AgentsPageProps {
+    connectedAddress: string | null;
+    onRequestConnect: () => void;
+}
+
 // Dossier address: longer than the table's 6…4 short form — a dossier is
 // where you come to actually read the address — but still overflow-safe.
 const dossierAddr = (a: string) => `${a.slice(0, 18)}…${a.slice(-6)}`;
 
-export default function AgentsPage() {
+export default function AgentsPage({ connectedAddress, onRequestConnect }: AgentsPageProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [agents, setAgents] = useState<AgentLicense[]>([]);
     const [activity, setActivity] = useState<Map<string, Activity> | null>(null);
     const [activityError, setActivityError] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
+    const refetchSeqRef = useRef(0);
 
     const [papersAgent, setPapersAgent] = useState<AgentLicense | null>(null);
     const [papersOpener, setPapersOpener] = useState<HTMLElement | null>(null);
+    const [revokeAgent, setRevokeAgent] = useState<AgentLicense | null>(null);
+    const [revokeOpener, setRevokeOpener] = useState<HTMLElement | null>(null);
+    const [policyAgent, setPolicyAgent] = useState<AgentLicense | null>(null);
+    const [policyOpener, setPolicyOpener] = useState<HTMLElement | null>(null);
+    const [mintOpen, setMintOpen] = useState(false);
+    const [mintOpener, setMintOpener] = useState<HTMLElement | null>(null);
+    const [relicenseAgent, setRelicenseAgent] = useState<AgentLicense | null>(null);
 
     useEffect(() => {
+        refetchSeqRef.current++;
         setLoading(true);
         setError(false);
         setActivityError(false);
@@ -100,10 +118,122 @@ export default function AgentsPage() {
         );
     };
 
+    // Same ghost-clamp discipline as Registry: a lagging replica must never
+    // resurrect a locally ghosted dossier (revocation is terminal on-chain).
+    const silentRefetch = () => {
+        if (isFixtureMode) return;
+        const seq = ++refetchSeqRef.current;
+        fetchRegistry()
+            .then((rows) => {
+                if (seq !== refetchSeqRef.current) return;
+                setAgents((prev) =>
+                    rows.map((r) => {
+                        const local = prev.find((p) => p.licenseNo === r.licenseNo);
+                        return local?.status === "ghost" && r.status !== "ghost"
+                            ? { ...r, status: "ghost" as const }
+                            : r;
+                    }),
+                );
+            })
+            .catch(() => {
+                /* local state already reflects the receipt; next load reconciles */
+            });
+    };
+
     const openPapers = (agent: AgentLicense) => {
         setPapersOpener(document.activeElement as HTMLElement);
         setPapersAgent(agent);
     };
+    const openRevoke = (agent: AgentLicense) => {
+        setRevokeOpener(document.activeElement as HTMLElement);
+        setRevokeAgent(agent);
+    };
+    const openPolicy = (agent: AgentLicense) => {
+        setPolicyOpener(document.activeElement as HTMLElement);
+        setPolicyAgent(agent);
+    };
+    const openMint = (relicense: AgentLicense | null) => {
+        if (!isFixtureMode && !connectedAddress) {
+            onRequestConnect();
+            return;
+        }
+        setMintOpener(document.activeElement as HTMLElement);
+        setRelicenseAgent(relicense);
+        setMintOpen(true);
+    };
+
+    const handleRevoked = (revokedAgent: AgentLicense) => {
+        setAgents((prev) =>
+            prev.map((a) => (a.licenseNo === revokedAgent.licenseNo ? { ...a, status: "ghost" } : a)),
+        );
+        silentRefetch();
+    };
+
+    const handleMinted = (r: MintResult) => {
+        if (!isFixtureMode) {
+            silentRefetch();
+            return;
+        }
+        setAgents((prev) => {
+            const nextNum =
+                prev.reduce((m, a) => {
+                    const n = parseInt(a.licenseNo.replace(/\D/g, ""), 10);
+                    return Number.isFinite(n) ? Math.max(m, n) : m;
+                }, 0) + 1;
+            const maxBlock = prev.reduce((m, a) => Math.max(m, a.issuedBlock), 4_100_000);
+            const known = prev.find((p) => p.address.toLowerCase() === r.agent.toLowerCase());
+            const row: AgentLicense = {
+                licenseId: null,
+                name: known?.name ?? formatAddress(r.agent),
+                address: r.agent,
+                principal: connectedAddress ?? FIXTURE_WALLET,
+                licenseNo: `HT-${String(nextNum).padStart(4, "0")}`,
+                capPerDay: 0,
+                venues: [],
+                expiry: `${new Date(r.expiryUnix * 1000).toISOString().slice(0, 10)} · ${r.expiryUnix}`,
+                expiryUnix: r.expiryUnix,
+                issuedBlock: maxBlock + 1,
+                scope: r.scope,
+                status: "licensed",
+            };
+            return [...prev, row];
+        });
+    };
+
+    const handlePolicyChanged = (agentAddr: string, patch: { capPerDay?: number; venues?: string[] }) => {
+        if (!isFixtureMode) {
+            silentRefetch();
+            return;
+        }
+        setAgents((prev) =>
+            prev.map((a) =>
+                a.address.toLowerCase() === agentAddr.toLowerCase() && a.status !== "ghost"
+                    ? {
+                          ...a,
+                          capPerDay: patch.capPerDay ?? a.capPerDay,
+                          venues: patch.venues ?? a.venues,
+                      }
+                    : a,
+            ),
+        );
+    };
+
+    const canOperate = (agent: AgentLicense) =>
+        agent.status !== "ghost" &&
+        (isFixtureMode ||
+            (!!connectedAddress &&
+                !!agent.principal &&
+                connectedAddress.toLowerCase() === agent.principal.toLowerCase()));
+
+    const canRelicense = (agent: AgentLicense) =>
+        agent.status === "ghost" &&
+        !agents.some(
+            (a) => a.status === "licensed" && a.address.toLowerCase() === agent.address.toLowerCase(),
+        ) &&
+        (isFixtureMode ||
+            (!!connectedAddress &&
+                !!agent.principal &&
+                connectedAddress.toLowerCase() === agent.principal.toLowerCase()));
 
     return (
         <motion.div
@@ -146,6 +276,9 @@ export default function AgentsPage() {
                 <div className="co-empty">
                     <div className="co-empty-msg">The ledger is empty.</div>
                     <p className="co-page-desc" style={{ margin: "0 auto" }}>No agents have been licensed on this network yet.</p>
+                    <button className="co-action-btn co-retry-btn" onClick={() => openMint(null)}>
+                        License the first agent
+                    </button>
                 </div>
             )}
 
@@ -228,9 +361,29 @@ export default function AgentsPage() {
                                                 ? "no verdicts on record"
                                                 : `${act.count} on record · last #${act.lastBlock.toLocaleString()}`}
                                     </span>
-                                    <button className="co-action-btn" onClick={() => openPapers(agent)}>
-                                        Papers
-                                    </button>
+                                    <div className="co-actions">
+                                        <button className="co-action-btn" onClick={() => openPapers(agent)}>
+                                            Papers
+                                        </button>
+                                        {canOperate(agent) && (
+                                            <button className="co-action-btn" onClick={() => openPolicy(agent)}>
+                                                Policy
+                                            </button>
+                                        )}
+                                        <button className="co-action-btn" onClick={() => navigateToVerify(agent.address)}>
+                                            Verify
+                                        </button>
+                                        {canOperate(agent) && (
+                                            <button className="co-action-btn is-revoke" onClick={() => openRevoke(agent)}>
+                                                Revoke
+                                            </button>
+                                        )}
+                                        {canRelicense(agent) && (
+                                            <button className="co-action-btn" onClick={() => openMint(agent)}>
+                                                Re-license
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </motion.article>
                         );
@@ -247,6 +400,44 @@ export default function AgentsPage() {
                         agent={papersAgent}
                         opener={papersOpener}
                         onClose={() => setPapersAgent(null)}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {revokeAgent && (
+                    <RevokeModal
+                        key={revokeAgent.licenseNo}
+                        agent={revokeAgent}
+                        opener={revokeOpener}
+                        onClose={() => setRevokeAgent(null)}
+                        onRevoked={handleRevoked}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {policyAgent && (
+                    <PolicyModal
+                        key={policyAgent.licenseNo}
+                        agent={policyAgent}
+                        opener={policyOpener}
+                        onClose={() => setPolicyAgent(null)}
+                        onPolicyChanged={handlePolicyChanged}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {mintOpen && (
+                    <MintModal
+                        key={`mint-${relicenseAgent?.licenseNo ?? "new"}`}
+                        opener={mintOpener}
+                        onClose={() => {
+                            setMintOpen(false);
+                            setRelicenseAgent(null);
+                        }}
+                        onMinted={handleMinted}
+                        connectedAddress={connectedAddress}
+                        agents={agents}
+                        relicense={relicenseAgent}
                     />
                 )}
             </AnimatePresence>

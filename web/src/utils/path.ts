@@ -1,9 +1,9 @@
-export type RouteKey = "landing" | "console";
+export type RouteKey = "landing" | "console" | "verify";
 
 // One scroll slot per route. App's popstate handler is the single owner:
 // it saves the outgoing route's position on every transition and decides
 // whether the incoming route restores (see App.tsx).
-const savedScroll: Record<RouteKey, number> = { landing: 0, console: 0 };
+const savedScroll: Record<RouteKey, number> = { landing: 0, console: 0, verify: 0 };
 
 export function saveScroll(route: RouteKey, y: number) {
     savedScroll[route] = y;
@@ -39,6 +39,29 @@ export function isConsoleRoute(path: string): boolean {
     return normalized === consolePath || normalized === `${consolePath}/`;
 }
 
+// ---------------------------------------------------------------------------
+// Verify route: wallet-free public status page at <base>/verify/<agent>.
+// The address segment is passed through verbatim — VerifyPage owns validation
+// and renders the honest unknown-address state for garbage input.
+// ---------------------------------------------------------------------------
+function verifyPrefix(): string {
+    const base = import.meta.env.BASE_URL || "/";
+    return normalizePath(`${base}/verify/`);
+}
+
+export function getVerifyPath(agent: string): string {
+    return normalizePath(verifyPrefix() + agent);
+}
+
+export function isVerifyRoute(path: string): boolean {
+    return normalizePath(path).startsWith(verifyPrefix());
+}
+
+export function parseVerifyAgent(path: string): string {
+    const rest = normalizePath(path).slice(verifyPrefix().length);
+    return rest.replace(/\/+$/, "").split("/")[0] ?? "";
+}
+
 export function navigateToConsole() {
     // Scroll capture is owned by App's popstate handler (one owner for both
     // synthetic and real history navigation); pushState does not scroll, so
@@ -53,5 +76,10 @@ export function navigateToConsole() {
 
 export function navigateToLanding() {
     window.history.pushState(null, "", getLandingPath() + window.location.search);
+    window.dispatchEvent(new PopStateEvent("popstate", { state: { synthetic: true } }));
+}
+
+export function navigateToVerify(agent: string) {
+    window.history.pushState(null, "", getVerifyPath(agent) + window.location.search);
     window.dispatchEvent(new PopStateEvent("popstate", { state: { synthetic: true } }));
 }

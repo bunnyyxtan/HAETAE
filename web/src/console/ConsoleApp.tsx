@@ -86,10 +86,14 @@ export default function ConsoleApp() {
             
             <main className="co-main">
                 <AnimatePresence mode="wait">
-                    {view === "registry" && <Registry key="registry" connectedAddress={address} />}
-                    {view === "agents" && <AgentsPage key="agents" />}
+                    {view === "registry" && (
+                        <Registry key="registry" connectedAddress={address} onRequestConnect={openConnect} />
+                    )}
+                    {view === "agents" && (
+                        <AgentsPage key="agents" connectedAddress={address} onRequestConnect={openConnect} />
+                    )}
                     {view === "standard" && <StandardPage key="standard" />}
-                    {view === "ledger" && <LedgerPage key="ledger" />}
+                    {view === "ledger" && <LedgerPage key="ledger" connectedAddress={address} />}
                 </AnimatePresence>
             </main>
 

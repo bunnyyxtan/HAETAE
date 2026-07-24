@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { flags } from "./fixtures";
+import { flags, FIXTURE_WALLET } from "./fixtures";
 import { isFixtureMode } from "../chain/mode";
 import { connectWallet, listWalletOptions, walletErrorMessage, type WalletOption } from "../chain/wallet";
 import { useModal } from "./useModal";
@@ -56,7 +56,7 @@ export default function ConnectModal({ opener, onClose, onSuccess }: ConnectModa
                 // Success shares the single close-intent path: teardown
                 // (stack, locks, focus) happens NOW, not at deferred unmount.
                 requestClose();
-                onSuccess("0x9A8B7C6D5E4F3A2B1C0D9E8F7A6B5C4D3E2F1A0B");
+                onSuccess(FIXTURE_WALLET);
             }
         }, 1400);
     };

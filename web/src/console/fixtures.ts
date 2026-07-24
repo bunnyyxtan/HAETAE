@@ -19,6 +19,11 @@ export const flags = {
     loadDelayMs: Number.isFinite(parsedDelay) && parsedDelay >= 0 ? parsedDelay : 900
 };
 
+// The address ConnectModal "connects" in fixture mode. Seeds below assign it
+// as principal to three rows so owner-gated flows (my-agents filter, policy
+// editor, re-license) are demonstrable without a chain.
+export const FIXTURE_WALLET = "0x9a8b7c6d5e4f3a2B1C0d9e8F7a6b5c4D3e2f1A0b";
+
 interface FixtureSeed {
     name: string;
     address: string;
@@ -28,22 +33,24 @@ interface FixtureSeed {
     expiry: string;
     issuedBlock: number;
     status: "licensed" | "ghost";
+    principal?: string;
 }
 
 const seeds: FixtureSeed[] = [
     {
         name: "Arbitrage Alpha",
-        address: "0x1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B",
+        address: "0x1a2b3C4d5e6F7A8B9c0D1e2f3A4B5c6d7e8F9A0B",
         licenseNo: "HT-0001",
         capPerDay: 50000,
         venues: ["Uniswap V3", "Curve"],
         expiry: "8800000 · 2026-12-01",
         issuedBlock: 8300000,
-        status: "licensed"
+        status: "licensed",
+        principal: FIXTURE_WALLET
     },
     {
         name: "Liquidity Sentinel",
-        address: "0x2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C",
+        address: "0x2b3C4d5e6F7A8b9c0d1E2F3A4b5c6D7e8f9A0B1c",
         licenseNo: "HT-0002",
         capPerDay: 100000,
         venues: ["Aave", "Balancer"],
@@ -53,27 +60,29 @@ const seeds: FixtureSeed[] = [
     },
     {
         name: "Flash-Mint Oracle",
-        address: "0x3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D",
+        address: "0x3c4D5E6F7a8b9c0d1e2F3a4B5C6D7e8f9A0b1c2d",
         licenseNo: "HT-0003",
         capPerDay: 15000,
         venues: ["MakerDAO"],
         expiry: "8700000 · 2026-09-30",
         issuedBlock: 8350000,
-        status: "ghost"
+        status: "ghost",
+        principal: FIXTURE_WALLET
     },
     {
         name: "Yield Harvester X",
-        address: "0x4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E",
+        address: "0x4D5e6f7A8b9C0D1e2F3a4B5c6d7e8f9A0b1C2D3E",
         licenseNo: "HT-0004",
         capPerDay: 25000,
         venues: ["Compound", "Morpho"],
         expiry: "9000000 · 2027-04-01",
         issuedBlock: 8360000,
-        status: "licensed"
+        status: "licensed",
+        principal: FIXTURE_WALLET
     },
     {
         name: "Peg Defender",
-        address: "0x5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F",
+        address: "0x5e6F7A8B9C0d1E2f3A4b5C6d7E8F9a0B1c2d3E4f",
         licenseNo: "HT-0005",
         capPerDay: 200000,
         venues: ["Frax", "Curve"],
@@ -83,7 +92,7 @@ const seeds: FixtureSeed[] = [
     },
     {
         name: "Rogue Trader v1",
-        address: "0x6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A",
+        address: "0x6F7a8b9C0d1e2f3a4B5c6d7e8f9a0B1c2d3E4f5a",
         licenseNo: "HT-0006",
         capPerDay: 10000,
         venues: ["Sushiswap"],
@@ -93,7 +102,7 @@ const seeds: FixtureSeed[] = [
     },
     {
         name: "Treasury Keeper",
-        address: "0x7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B",
+        address: "0x7a8b9C0d1e2f3a4B5C6d7E8F9A0B1c2d3e4F5a6b",
         licenseNo: "HT-0007",
         capPerDay: 500000,
         venues: ["Lido", "Spark"],
@@ -103,7 +112,7 @@ const seeds: FixtureSeed[] = [
     },
     {
         name: "Frontrun Bot 99",
-        address: "0x8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C",
+        address: "0x8B9c0D1E2F3A4b5c6D7E8F9A0b1c2d3e4f5A6B7c",
         licenseNo: "HT-0008",
         capPerDay: 5000,
         venues: ["Uniswap V2"],
@@ -116,7 +125,7 @@ const seeds: FixtureSeed[] = [
 export const agentFixtures: AgentLicense[] = seeds.map((s) => ({
     ...s,
     licenseId: null,
-    principal: null,
+    principal: s.principal ?? null,
     expiryUnix: null,
     scope: null
 }));

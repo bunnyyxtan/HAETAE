@@ -1,21 +1,26 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { agentFixtures, flags, AgentLicense, formatAddress } from "./fixtures";
+import { agentFixtures, flags, AgentLicense, FIXTURE_WALLET, formatAddress } from "./fixtures";
 import { isFixtureMode } from "../chain/mode";
 import { fetchRegistry } from "../chain/reads";
+import { navigateToVerify } from "../utils/path";
 import PapersModal from "./PapersModal";
 import RevokeModal from "./RevokeModal";
+import PolicyModal from "./PolicyModal";
+import MintModal, { type MintResult } from "./MintModal";
 
 interface RegistryProps {
     connectedAddress: string | null;
+    onRequestConnect: () => void;
 }
 
-export default function Registry({ connectedAddress }: RegistryProps) {
+export default function Registry({ connectedAddress, onRequestConnect }: RegistryProps) {
     const [loading, setLoading] = useState(true);
     const [agents, setAgents] = useState<AgentLicense[]>([]);
     const [error, setError] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
-    // Monotone token: overlapping silent refetches (rapid successive revokes)
+    const [mineOnly, setMineOnly] = useState(false);
+    // Monotone token: overlapping silent refetches (rapid successive writes)
     // can resolve out of order — only the newest snapshot may land.
     const refetchSeqRef = useRef(0);
 
@@ -26,6 +31,13 @@ export default function Registry({ connectedAddress }: RegistryProps) {
     const [revokeAgent, setRevokeAgent] = useState<AgentLicense | null>(null);
     const [revokeOpener, setRevokeOpener] = useState<HTMLElement | null>(null);
     const papersBtnRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+    const [policyAgent, setPolicyAgent] = useState<AgentLicense | null>(null);
+    const [policyOpener, setPolicyOpener] = useState<HTMLElement | null>(null);
+
+    const [mintOpen, setMintOpen] = useState(false);
+    const [mintOpener, setMintOpener] = useState<HTMLElement | null>(null);
+    const [relicenseAgent, setRelicenseAgent] = useState<AgentLicense | null>(null);
 
     useEffect(() => {
         refetchSeqRef.current++; // a fresh load invalidates in-flight silent refetches
@@ -61,6 +73,32 @@ export default function Registry({ connectedAddress }: RegistryProps) {
         };
     }, [reloadKey]);
 
+    // Live: a confirmed write (revoke/mint/policy) refreshes rows silently so
+    // the table shows chain truth, not a local guess.
+    // Ghost-clamp: the public RPC is load-balanced, and a lagging replica can
+    // still report a row as licensed for a beat. Revocation is terminal
+    // on-chain (status 2, no un-revoke path), so a locally ghosted row must
+    // never be resurrected by a stale read.
+    const silentRefetch = () => {
+        if (isFixtureMode) return;
+        const seq = ++refetchSeqRef.current;
+        fetchRegistry()
+            .then((rows) => {
+                if (seq !== refetchSeqRef.current) return; // stale response, drop
+                setAgents((prev) =>
+                    rows.map((r) => {
+                        const local = prev.find((p) => p.licenseNo === r.licenseNo);
+                        return local?.status === "ghost" && r.status !== "ghost"
+                            ? { ...r, status: "ghost" as const }
+                            : r;
+                    }),
+                );
+            })
+            .catch(() => {
+                /* local state already reflects the receipt; next load reconciles */
+            });
+    };
+
     const openPapers = (agent: AgentLicense) => {
         setPapersOpener(document.activeElement as HTMLElement);
         setPapersAgent(agent);
@@ -71,6 +109,23 @@ export default function Registry({ connectedAddress }: RegistryProps) {
         setRevokeAgent(agent);
     };
 
+    const openPolicy = (agent: AgentLicense) => {
+        setPolicyOpener(document.activeElement as HTMLElement);
+        setPolicyAgent(agent);
+    };
+
+    // Mint entry: in live mode the ceremony needs a signer, so a disconnected
+    // click routes to the connect modal instead of a dead-end form.
+    const openMint = (relicense: AgentLicense | null) => {
+        if (!isFixtureMode && !connectedAddress) {
+            onRequestConnect();
+            return;
+        }
+        setMintOpener(document.activeElement as HTMLElement);
+        setRelicenseAgent(relicense);
+        setMintOpen(true);
+    };
+
     const handleRevoked = (revokedAgent: AgentLicense) => {
         setAgents(prev => prev.map(a => a.licenseNo === revokedAgent.licenseNo ? { ...a, status: "ghost" } : a));
         // Fallback focus to the Papers button since the Revoke button will be removed from the DOM.
@@ -78,41 +133,88 @@ export default function Registry({ connectedAddress }: RegistryProps) {
         if (papersBtn) {
             setRevokeOpener(papersBtn);
         }
-        // Live: the receipt already confirmed the revoke; refresh the rows
-        // silently so the table shows chain truth, not a local guess.
-        // Ghost-clamp: the public RPC is load-balanced, and a lagging replica
-        // can still report the row as licensed for a beat. Revocation is
-        // terminal on-chain (status 2, no un-revoke path), so a locally
-        // ghosted row must never be resurrected by a stale read.
-        if (!isFixtureMode) {
-            const seq = ++refetchSeqRef.current;
-            fetchRegistry()
-                .then((rows) => {
-                    if (seq !== refetchSeqRef.current) return; // stale response, drop
-                    setAgents((prev) =>
-                        rows.map((r) => {
-                            const local = prev.find((p) => p.licenseNo === r.licenseNo);
-                            return local?.status === "ghost" && r.status !== "ghost"
-                                ? { ...r, status: "ghost" as const }
-                                : r;
-                        }),
-                    );
-                })
-                .catch(() => {
-                    /* row already ghosted locally; next load reconciles */
-                });
-        }
+        silentRefetch();
     };
 
-    // In live mode the revoke ceremony is real: only the license's principal
-    // can sign it, so the button only shows for rows the connected wallet owns.
+    const handleMinted = (r: MintResult) => {
+        if (!isFixtureMode) {
+            silentRefetch();
+            return;
+        }
+        // Fixture theater: the page owns numbering — next HT number after the
+        // highest on the books (re-mints keep the old ghost row, chain truth).
+        setAgents((prev) => {
+            const nextNum =
+                prev.reduce((m, a) => {
+                    const n = parseInt(a.licenseNo.replace(/\D/g, ""), 10);
+                    return Number.isFinite(n) ? Math.max(m, n) : m;
+                }, 0) + 1;
+            const maxBlock = prev.reduce((m, a) => Math.max(m, a.issuedBlock), 4_100_000);
+            const known = prev.find((p) => p.address.toLowerCase() === r.agent.toLowerCase());
+            const row: AgentLicense = {
+                licenseId: null,
+                name: known?.name ?? formatAddress(r.agent),
+                address: r.agent,
+                principal: connectedAddress ?? FIXTURE_WALLET,
+                licenseNo: `HT-${String(nextNum).padStart(4, "0")}`,
+                capPerDay: 0,
+                venues: [],
+                expiry: `${new Date(r.expiryUnix * 1000).toISOString().slice(0, 10)} · ${r.expiryUnix}`,
+                expiryUnix: r.expiryUnix,
+                issuedBlock: maxBlock + 1,
+                scope: r.scope,
+                status: "licensed",
+            };
+            return [...prev, row];
+        });
+    };
+
+    const handlePolicyChanged = (agentAddr: string, patch: { capPerDay?: number; venues?: string[] }) => {
+        if (!isFixtureMode) {
+            silentRefetch();
+            return;
+        }
+        setAgents((prev) =>
+            prev.map((a) =>
+                a.address.toLowerCase() === agentAddr.toLowerCase() && a.status !== "ghost"
+                    ? {
+                          ...a,
+                          capPerDay: patch.capPerDay ?? a.capPerDay,
+                          venues: patch.venues ?? a.venues,
+                      }
+                    : a,
+            ),
+        );
+    };
+
+    // In live mode writes are real: only the license's principal can sign, so
+    // owner-only actions show only for rows the connected wallet owns.
     // Fixture mode keeps the ungated S02 ceremony as demo insurance.
-    const canRevoke = (agent: AgentLicense) =>
+    const canOperate = (agent: AgentLicense) =>
         agent.status !== "ghost" &&
         (isFixtureMode ||
             (!!connectedAddress &&
                 !!agent.principal &&
                 connectedAddress.toLowerCase() === agent.principal.toLowerCase()));
+
+    // Re-license: revoked ids are terminal (Law 2) — this mints a NEW id for
+    // the same agent address, prefilled in the ceremony.
+    const canRelicense = (agent: AgentLicense) =>
+        agent.status === "ghost" &&
+        !agents.some(
+            (a) => a.status === "licensed" && a.address.toLowerCase() === agent.address.toLowerCase(),
+        ) &&
+        (isFixtureMode ||
+            (!!connectedAddress &&
+                !!agent.principal &&
+                connectedAddress.toLowerCase() === agent.principal.toLowerCase()));
+
+    const displayed =
+        mineOnly && connectedAddress
+            ? agents.filter(
+                  (a) => a.principal && a.principal.toLowerCase() === connectedAddress.toLowerCase(),
+              )
+            : agents;
 
     return (
         <motion.div
@@ -124,6 +226,20 @@ export default function Registry({ connectedAddress }: RegistryProps) {
             <div className="co-page-header">
                 <h1 className="co-page-title font-display">Agent Registry</h1>
                 <p className="co-page-desc">Licensed agents operating on the GIWA network. Revocation is one block.</p>
+                <div className="co-header-actions">
+                    <button className="co-btn-primary" onClick={() => openMint(null)}>
+                        License an Agent
+                    </button>
+                    {connectedAddress && (
+                        <button
+                            className={`co-chip ${mineOnly ? "is-on" : ""}`}
+                            aria-pressed={mineOnly}
+                            onClick={() => setMineOnly((v) => !v)}
+                        >
+                            My agents
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="co-table-wrap">
@@ -174,12 +290,29 @@ export default function Registry({ connectedAddress }: RegistryProps) {
                                     <div className="co-empty">
                                         <div className="co-empty-msg">The ledger is empty.</div>
                                         <p className="co-page-desc" style={{ margin: "0 auto" }}>No agents have been licensed on this network yet.</p>
+                                        <button className="co-action-btn co-retry-btn" onClick={() => openMint(null)}>
+                                            License the first agent
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
                         )}
 
-                        {!loading && !error && agents.map((agent, i) => (
+                        {!loading && !error && agents.length > 0 && displayed.length === 0 && (
+                            <tr>
+                                <td colSpan={8}>
+                                    <div className="co-empty">
+                                        <div className="co-empty-msg">No agents under this principal.</div>
+                                        <p className="co-page-desc" style={{ margin: "0 auto" }}>The connected wallet answers for no licenses here yet.</p>
+                                        <button className="co-action-btn co-retry-btn" onClick={() => openMint(null)}>
+                                            License an Agent
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
+
+                        {!loading && !error && displayed.map((agent, i) => (
                             <motion.tr 
                                 key={agent.licenseNo} 
                                 className={`co-tr ${agent.status === 'ghost' ? 'is-ghost' : ''}`}
@@ -211,8 +344,17 @@ export default function Registry({ connectedAddress }: RegistryProps) {
                                         >
                                             Papers
                                         </button>
-                                        {canRevoke(agent) && (
+                                        {canOperate(agent) && (
+                                            <button className="co-action-btn" onClick={() => openPolicy(agent)}>Policy</button>
+                                        )}
+                                        <button className="co-action-btn" onClick={() => navigateToVerify(agent.address)}>
+                                            Verify
+                                        </button>
+                                        {canOperate(agent) && (
                                             <button className="co-action-btn is-revoke" onClick={() => openRevoke(agent)}>Revoke</button>
+                                        )}
+                                        {canRelicense(agent) && (
+                                            <button className="co-action-btn" onClick={() => openMint(agent)}>Re-license</button>
                                         )}
                                     </div>
                                 </td>
@@ -233,6 +375,33 @@ export default function Registry({ connectedAddress }: RegistryProps) {
             <AnimatePresence>
                 {revokeAgent && (
                     <RevokeModal key={revokeAgent.licenseNo} agent={revokeAgent} opener={revokeOpener} onClose={() => setRevokeAgent(null)} onRevoked={handleRevoked} />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {policyAgent && (
+                    <PolicyModal
+                        key={policyAgent.licenseNo}
+                        agent={policyAgent}
+                        opener={policyOpener}
+                        onClose={() => setPolicyAgent(null)}
+                        onPolicyChanged={handlePolicyChanged}
+                    />
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {mintOpen && (
+                    <MintModal
+                        key={`mint-${relicenseAgent?.licenseNo ?? "new"}`}
+                        opener={mintOpener}
+                        onClose={() => {
+                            setMintOpen(false);
+                            setRelicenseAgent(null);
+                        }}
+                        onMinted={handleMinted}
+                        connectedAddress={connectedAddress}
+                        agents={agents}
+                        relicense={relicenseAgent}
+                    />
                 )}
             </AnimatePresence>
         </motion.div>

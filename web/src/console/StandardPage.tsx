@@ -1,5 +1,12 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { getAddress, isAddress } from "viem";
 import { addresses, explorerAddr } from "../chain/deployment";
+import { isFixtureMode } from "../chain/mode";
+import { fetchLicenseSummary } from "../chain/reads";
+import { agentFixtures, flags, formatAddress } from "./fixtures";
+import { navigateToVerify } from "../utils/path";
+import { useCopy } from "./useCopy";
 
 // The canonical text lives in standard/ERC-agent-license.md — this page is a
 // reading surface for it, not a second source of truth. Signatures and laws
@@ -60,13 +67,134 @@ const LAWS: { n: string; text: string; red?: boolean }[] = [
     },
 ];
 
+// Deployed addresses: adopters wire against these — copyable, explorable.
+const CONTRACTS: { name: string; role: string; addr: string }[] = [
+    { name: "HaetaeLicense", role: "the license registry (IAgentLicense)", addr: addresses.license },
+    { name: "HaetaePolicy", role: "caps + venue allowlists", addr: addresses.policy },
+    { name: "HaetaeGate", role: "pre-trade enforcement", addr: addresses.gate },
+    { name: "SentinelAuthority", role: "watchdog verdicts", addr: addresses.sentinel },
+    { name: "DemoVault", role: "reference integration", addr: addresses.vault },
+    { name: "MockUSDC", role: "tUSDC test token (6 decimals)", addr: addresses.usdc },
+];
+
+const SOLIDITY_SNIPPET = `import {IAgentLicense} from "haetae/interfaces/IAgentLicense.sol";
+
+contract MyVault {
+    IAgentLicense constant LICENSE =
+        IAgentLicense(${addresses.license});
+
+    error AgentNotLicensed(address agent);
+
+    modifier onlyLicensed(address agent) {
+        if (!LICENSE.isLicensed(agent)) revert AgentNotLicensed(agent);
+        _;
+    }
+}`;
+
+const TS_SNIPPET = `import { isLicensed, getPolicy, watchAgent, decodeHaetaeError } from "@haetae/sdk";
+
+// 1 · gate the action
+if (!(await isLicensed(agent))) throw new Error("agent is not licensed");
+
+// 2 · respect the policy layer
+const policy = await getPolicy(agent); // caps, venues, remaining today
+
+// 3 · halt the moment the license dies
+const stop = watchAgent(agent, (ev) => {
+    if (ev.kind === "revoked") halt(agent);
+});
+
+// 4 · typed errors, never raw hex
+try {
+    await runTrade(agent);
+} catch (err) {
+    console.error(decodeHaetaeError(err).message);
+}`;
+
 const sectionMotion = (i: number) => ({
     initial: { opacity: 0, y: 10 },
     animate: { opacity: 1, y: 0 },
     transition: { delay: 0.08 * i, duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as const },
 });
 
+interface CheckResult {
+    tone: "ok" | "bad" | "muted";
+    text: string;
+}
+
+const toneColor: Record<CheckResult["tone"], string> = {
+    ok: "var(--jade)",
+    bad: "var(--vermillion)",
+    muted: "var(--stone)",
+};
+
 export default function StandardPage() {
+    const { copied, copy } = useCopy();
+
+    // Live check widget: the standard's one question, answerable on the spot.
+    const [checkInput, setCheckInput] = useState("");
+    const [checkBusy, setCheckBusy] = useState(false);
+    const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
+    const [checkedAddr, setCheckedAddr] = useState<string | null>(null);
+
+    const runCheck = () => {
+        const v = checkInput.trim();
+        if (!isAddress(v)) {
+            setCheckResult({ tone: "bad", text: "Not a valid EVM address." });
+            setCheckedAddr(null);
+            return;
+        }
+        const addr = getAddress(v);
+        setCheckBusy(true);
+        setCheckResult(null);
+        setCheckedAddr(null);
+
+        if (isFixtureMode) {
+            setTimeout(() => {
+                const row = agentFixtures.find((a) => a.address.toLowerCase() === addr.toLowerCase());
+                setCheckResult(
+                    row
+                        ? row.status === "ghost"
+                            ? { tone: "bad", text: `isLicensed(${formatAddress(addr)}) → false · revoked (${row.licenseNo})` }
+                            : {
+                                  tone: "ok",
+                                  text: `isLicensed(${formatAddress(addr)}) → true · ${row.licenseNo} · expires ${row.expiry.split(" · ")[0]}`,
+                              }
+                        : { tone: "muted", text: `isLicensed(${formatAddress(addr)}) → false · no record` },
+                );
+                setCheckedAddr(addr);
+                setCheckBusy(false);
+            }, Math.max(flags.loadDelayMs, 200));
+            return;
+        }
+
+        fetchLicenseSummary(addr)
+            .then((s) => {
+                setCheckResult(
+                    s.licensed
+                        ? {
+                              tone: "ok",
+                              text: `isLicensed(${formatAddress(addr)}) → true${
+                                  s.expiryUnix
+                                      ? ` · expires ${new Date(s.expiryUnix * 1000).toISOString().slice(0, 10)}`
+                                      : ""
+                              }`,
+                          }
+                        : {
+                              tone: s.statusCode === null ? "muted" : "bad",
+                              text: `isLicensed(${formatAddress(addr)}) → false · ${
+                                  s.statusCode === 2 ? "revoked" : s.statusCode === 1 ? "expired" : "no record"
+                              }`,
+                          },
+                );
+                setCheckedAddr(addr);
+            })
+            .catch(() => {
+                setCheckResult({ tone: "bad", text: "Chain read failed — the ledger is unreachable." });
+            })
+            .finally(() => setCheckBusy(false));
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -103,7 +231,15 @@ export default function StandardPage() {
                 <div className="co-papers-label" style={{ marginBottom: 12 }}>
                     Interface — IAgentLicense
                 </div>
-                <pre className="co-std-code">{INTERFACE_TEXT}</pre>
+                <div className="co-snippet-wrap">
+                    <pre className="co-std-code">{INTERFACE_TEXT}</pre>
+                    <button
+                        className="co-chip co-snippet-copy"
+                        onClick={() => copy("iface", INTERFACE_TEXT)}
+                    >
+                        {copied === "iface" ? "Copied ✓" : "Copy"}
+                    </button>
+                </div>
             </motion.div>
 
             <motion.div {...sectionMotion(3)}>
@@ -120,7 +256,104 @@ export default function StandardPage() {
                 </div>
             </motion.div>
 
-            <motion.div className="co-std-links" {...sectionMotion(4)}>
+            <motion.div {...sectionMotion(4)}>
+                <div className="co-papers-label" style={{ margin: "48px 0 12px" }}>
+                    Deployed — GIWA Sepolia · chain 91342
+                </div>
+                <div className="co-addr-table">
+                    {CONTRACTS.map((c) => (
+                        <div className="co-addr-row" key={c.name}>
+                            <span className="co-addr-name">
+                                {c.name}
+                                <span className="co-std-note" style={{ display: "block", marginTop: 2 }}>{c.role}</span>
+                            </span>
+                            <span className="co-addr-val">{c.addr}</span>
+                            <button className="co-chip" onClick={() => copy(c.name, c.addr)}>
+                                {copied === c.name ? "Copied ✓" : "Copy"}
+                            </button>
+                            <a
+                                className="co-tx-link font-mono"
+                                href={explorerAddr(c.addr)}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                ↗
+                            </a>
+                        </div>
+                    ))}
+                </div>
+            </motion.div>
+
+            <motion.div {...sectionMotion(5)}>
+                <div className="co-papers-label" style={{ margin: "48px 0 12px" }}>
+                    Adopt it — Solidity
+                </div>
+                <div className="co-snippet-wrap">
+                    <pre className="co-std-code">{SOLIDITY_SNIPPET}</pre>
+                    <button
+                        className="co-chip co-snippet-copy"
+                        onClick={() => copy("sol", SOLIDITY_SNIPPET)}
+                    >
+                        {copied === "sol" ? "Copied ✓" : "Copy"}
+                    </button>
+                </div>
+
+                <div className="co-papers-label" style={{ margin: "32px 0 12px" }}>
+                    Adopt it — TypeScript
+                </div>
+                <div className="co-snippet-wrap">
+                    <pre className="co-std-code">{TS_SNIPPET}</pre>
+                    <button className="co-chip co-snippet-copy" onClick={() => copy("ts", TS_SNIPPET)}>
+                        {copied === "ts" ? "Copied ✓" : "Copy"}
+                    </button>
+                </div>
+                <p className="co-std-note">
+                    @haetae/sdk publishes from this repository and is in progress — the names above
+                    (isLicensed, getPolicy, watchAgent, decodeHaetaeError) are the standard's surface.
+                </p>
+            </motion.div>
+
+            <motion.div {...sectionMotion(6)}>
+                <div className="co-papers-label" style={{ margin: "48px 0 12px" }}>
+                    Ask the ledger
+                </div>
+                <div className="co-check-widget">
+                    <div className="co-check-row">
+                        <input
+                            className="co-input"
+                            value={checkInput}
+                            onChange={(e) => setCheckInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") runCheck();
+                            }}
+                            placeholder="Any agent address — 0x…"
+                            aria-label="Agent address to check"
+                            spellCheck={false}
+                        />
+                        <button className="co-btn-primary" onClick={runCheck} disabled={checkBusy}>
+                            {checkBusy ? "Consulting…" : "Check"}
+                        </button>
+                    </div>
+                    <div
+                        className="co-check-line"
+                        role="status"
+                        style={checkResult ? { color: toneColor[checkResult.tone] } : undefined}
+                    >
+                        {checkBusy ? "consulting the ledger…" : checkResult?.text ?? "\u00A0"}
+                    </div>
+                    {checkedAddr && (
+                        <button
+                            className="co-action-btn"
+                            style={{ alignSelf: "flex-start" }}
+                            onClick={() => navigateToVerify(checkedAddr)}
+                        >
+                            Full report ↗
+                        </button>
+                    )}
+                </div>
+            </motion.div>
+
+            <motion.div className="co-std-links" {...sectionMotion(7)}>
                 <a className="co-tx-link font-mono" href={DRAFT_URL} target="_blank" rel="noreferrer">
                     Full draft — standard/ERC-agent-license.md ↗
                 </a>
