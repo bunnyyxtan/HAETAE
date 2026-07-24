@@ -538,7 +538,11 @@ html:has(.co-app) {
 }
 .co-papers-value {
     font-size: 15px;
-    word-break: break-all;
+    /* Sans values are human-readable (names, venue lists): wrap at word
+       boundaries, break within a word only as a last resort. Machine data
+       gets hard-wrapping via the .mono variant below. */
+    overflow-wrap: break-word;
+    min-width: 0;
     font-weight: 500;
 }
 /* One shared 20px line box for sans and mono values, scoped to the paper
@@ -551,6 +555,10 @@ html:has(.co-app) {
     font-family: "JetBrains Mono", monospace;
     font-size: 13px;
     font-weight: 400;
+    /* Machine data (0x addresses, principals, license numbers) has no word
+       boundaries — allow breaking anywhere so it never overflows. */
+    overflow-wrap: anywhere;
+    word-break: break-all;
 }
 
 /* Address chip */
