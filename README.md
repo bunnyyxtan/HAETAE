@@ -24,7 +24,7 @@ cd contracts && forge build               # 3 · the contracts (optional)
 Every address below is Blockscout-verified. `deployments/giwa-sepolia.json` is
 the single source of truth — the console imports it directly. Deployed from
 commit
-[`4b43402`](https://github.com/bunnyyxtan/HAETAE/commit/4b43402d0eb1bf67718ab09930f60c2e52990e81).
+`4b43402` (pre-reboot history, archived off-repo — see docs/process/LOG.md preamble).
 
 | Contract | Address |
 | --- | --- |
@@ -105,7 +105,7 @@ Replit environment plumbing, not product code (LOG S01, Addendum 3).
 ## Status
 
 Phase 0 (bootstrap + landing) and Phase 1 (License Registry spine) are closed —
-tags `phase-0-done`, `phase-1-done`, CI green. Phase 2 is live: the full spine
+release tags now follow the post-reboot `v0.x.y-slug` scheme (`v0.1.0-contracts` onward), CI green. Phase 2 is live: the full spine
 and demo stack deployed and Blockscout-verified on GIWA Sepolia, with the
 console live-wired across all four tabs (S04–S05, ratified). In flight: the
 submission package (S06). Next: Phase 3, ERC-4337 validation-layer
