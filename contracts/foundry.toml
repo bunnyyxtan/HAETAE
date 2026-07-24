@@ -1,0 +1,16 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+# Pinned exactly: Blockscout verification and reproducible builds both need it.
+solc_version = "0.8.24"
+optimizer = true
+optimizer_runs = 200
+# Enforces zero compiler warnings on all src/ files (RULES.md R4).
+deny_warnings = true
+
+[rpc_endpoints]
+# Read-only config; no transaction happens without explicit human GO (RULES R5.2).
+giwa_sepolia = "https://sepolia-rpc.giwa.io"
