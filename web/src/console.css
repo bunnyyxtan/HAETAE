@@ -497,12 +497,11 @@ html:has(.co-app) {
 }
 
 /* Papers Details */
-.co-papers {
-    padding: 0;
-}
 .co-papers-seal {
     text-align: center;
-    margin-bottom: 40px;
+    /* 8px atop the body's 32px inset: the seal clears the header rule by
+       40px, matching its 40px clearance above the field grid below. */
+    margin: 8px 0 40px;
 }
 .co-papers-seal-mark {
     display: inline-flex;
@@ -541,6 +540,12 @@ html:has(.co-app) {
     font-size: 15px;
     word-break: break-all;
     font-weight: 500;
+}
+/* One shared 20px line box for sans and mono values, scoped to the paper
+   grid: paired values sit on level baselines instead of wobbling, while
+   inline-sized values in sibling modals keep their metrics. */
+.co-papers-grid .co-papers-value {
+    line-height: 20px;
 }
 .co-papers-value.mono {
     font-family: "JetBrains Mono", monospace;

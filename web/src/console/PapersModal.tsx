@@ -66,7 +66,7 @@ export default function PapersModal({ agent, opener, onClose }: PapersModalProps
                     <h2 className="co-modal-title">License Record</h2>
                     <button className="co-modal-close" onClick={requestClose} aria-label="Close">×</button>
                 </div>
-                <div className="co-modal-body co-papers">
+                <div className="co-modal-body">
                     <div className="co-papers-seal">
                         <div className={`co-papers-seal-mark ${agent.status === 'ghost' ? 'ghost' : ''}`}>
                             해태
