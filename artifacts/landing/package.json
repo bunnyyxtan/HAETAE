@@ -1,0 +1,10 @@
+{
+  "name": "@workspace/landing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @haetae/web run dev",
+    "build": "pnpm --filter @haetae/web run build && rm -rf dist && mkdir -p dist && cp -r ../../web/dist dist/public"
+  }
+}
