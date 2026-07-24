@@ -47,3 +47,37 @@ jobs:
 
       - name: test
         run: pnpm -r test
+
+  # Single-author + Conventional-subject law (RULES.md, S10). Platform pushes
+  # that breach the law turn main red; next session's first duty: reshape.
+  commit-law:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: enforce commit law
+        run: |
+          set -euo pipefail
+          IDENT='bunnyyxtan <129172221+bunnyyxtan@users.noreply.github.com>'
+          BEFORE='${{ github.event.before }}'
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            COMMITS=$(git rev-list -n 20 '${{ github.sha }}')
+          else
+            COMMITS=$(git rev-list "$BEFORE..${{ github.sha }}")
+          fi
+          FAIL=0
+          for C in $COMMITS; do
+            A=$(git show -s --format='%an <%ae>' "$C")
+            M=$(git show -s --format='%cn <%ce>' "$C")
+            S=$(git show -s --format='%s' "$C")
+            if [ "$A" != "$IDENT" ] || [ "$M" != "$IDENT" ]; then
+              echo "AUTHOR/COMMITTER BREACH $C: author='$A' committer='$M'"; FAIL=1
+            fi
+            if ! echo "$S" | grep -qE '^(feat|fix|docs|test|refactor|chore|ci|perf|style|build)(\([a-z0-9-]+\))?!?: .+' || [ "${#S}" -gt 72 ]; then
+              echo "SUBJECT BREACH $C: '$S'"; FAIL=1
+            fi
+          done
+          [ "$FAIL" = 0 ] || exit 1
+          echo "commit law: all clear"
