@@ -11,6 +11,8 @@ import {IAgentLicense} from "../src/interfaces/IAgentLicense.sol";
 import {IHaetaePolicy} from "../src/interfaces/IHaetaePolicy.sol";
 import {IHaetaeGate} from "../src/interfaces/IHaetaeGate.sol";
 import {MockVerifier} from "./License.t.sol";
+import {MockDojangEAS, MockScroll} from "./Dojang.t.sol";
+import {HaetaeDojang, IDojangScrollLike} from "../src/adapters/HaetaeDojang.sol";
 
 // Test doubles — R1.1: they live ONLY in test files.
 contract MiniUSDC {
@@ -240,5 +242,40 @@ contract DemoFlowTest is Test {
         vm.prank(AGENT);
         vault.execute(VENUE_A, address(usdc), 100e6);
         assertEq(usdc.balanceOf(VENUE_A), 100e6);
+    }
+
+    // --- P3-B: the demo mint gate, run through the REAL adapter -------------------
+    // The mock EAS sits behind the same getAttestation(bytes32) ABI the live
+    // adapter calls on the predeploy; no test-only shortcut exists in src/.
+
+    function test_DojangLane_MintGate_AttestRegisterMintRevoke() public {
+        MockScroll scroll = new MockScroll();
+        MockDojangEAS eas = new MockDojangEAS();
+        bytes32 schema = keccak256("haetae: bool isVerifiedPrincipal");
+        address attester = makeAddr("haetae-attester");
+        HaetaeDojang dj =
+            new HaetaeDojang(IDojangScrollLike(address(scroll)), keccak256("upbit"), address(eas), schema, attester);
+        HaetaeLicense lic2 = new HaetaeLicense(ADMIN, dj);
+
+        // Unattested principal is refused at the gate.
+        vm.expectRevert(abi.encodeWithSelector(HaetaeLicense.NotVerified.selector, PRINCIPAL));
+        vm.prank(PRINCIPAL);
+        lic2.mint(AGENT, EXPIRY, 0);
+
+        // Attest -> register -> the same mint now seals.
+        bytes32 uid = eas.attest(schema, attester, PRINCIPAL, 0);
+        dj.registerAttestation(uid);
+        vm.prank(PRINCIPAL);
+        lic2.mint(AGENT, EXPIRY, 0);
+        assertTrue(lic2.isLicensed(AGENT));
+
+        // Attestation revoked -> verification dies within one read; the license
+        // itself lives on (revocation of KYC gates future mints, not past ones).
+        eas.revoke(uid);
+        assertFalse(dj.isVerified(PRINCIPAL));
+        vm.expectRevert(abi.encodeWithSelector(HaetaeLicense.NotVerified.selector, PRINCIPAL));
+        vm.prank(PRINCIPAL);
+        lic2.mint(AGENT2, EXPIRY, 0);
+        assertTrue(lic2.isLicensed(AGENT), "existing license unaffected by KYC revoke");
     }
 }
