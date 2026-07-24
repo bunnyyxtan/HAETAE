@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {HaetaeLicense} from "../src/HaetaeLicense.sol";
+import {IVerifiedAddress} from "../src/interfaces/IVerifiedAddress.sol";
+import {HaetaeDojang, IDojangScrollLike} from "../src/adapters/HaetaeDojang.sol";
 import {HaetaePolicy} from "../src/HaetaePolicy.sol";
 import {HaetaeGate} from "../src/HaetaeGate.sol";
 import {SentinelAuthority} from "../src/sentinel/SentinelAuthority.sol";
@@ -34,18 +36,38 @@ contract Deploy is Script {
     /// @notice tUSDC minted to the DemoVault so the stage has funds to move.
     uint256 internal constant STAGE_FUNDING = 1_000_000e6;
 
+    /// @notice EAS predeploy on GIWA Sepolia (OP-stack canonical slot).
+    address internal constant EAS_PREDEPLOY = 0x4200000000000000000000000000000000000021;
+
+    /// @notice GIWA's live DojangScroll proxy (verified on-chain, LOG S10).
+    address internal constant DOJANG_SCROLL = 0xd5077b67dcb56caC8b270C7788FC3E6ee03F17B9;
+
+    /// @notice Upbit Korea attester-id lane on DojangScroll (RULING 2 constant).
+    bytes32 internal constant UPBIT_KOREA = keccak256("dojang.dojangattesterids.upbitkorea");
+
     function run() external {
         if (block.chainid != GIWA_SEPOLIA) revert WrongChain();
 
         uint256 deployerPk = vm.envUint("DEPLOYER_PK");
         address deployer = vm.addr(deployerPk);
         address watcher = vm.envAddress("SENTINEL_ADDR");
+        // HAETAE lane bindings: schema UID registered in the step-3 ceremony,
+        // attester is the fresh dedicated key (never the deployer — key law).
+        bytes32 haetaeSchemaUid = vm.envBytes32("HAETAE_SCHEMA_UID");
+        address haetaeAttester = vm.envAddress("HAETAE_ATTESTER_ADDR");
+        // IS_DEMO=true keeps the always-true DemoVerifier on the license gate
+        // (demo window only); default is the real dual-lane adapter.
+        bool isDemo = vm.envOr("IS_DEMO", false);
 
         vm.startBroadcast(deployerPk);
 
         DemoVerifier verifier = new DemoVerifier();
         MockUSDC usdc = new MockUSDC();
-        HaetaeLicense license = new HaetaeLicense(deployer, verifier);
+        HaetaeDojang dojang = new HaetaeDojang(
+            IDojangScrollLike(DOJANG_SCROLL), UPBIT_KOREA, EAS_PREDEPLOY, haetaeSchemaUid, haetaeAttester
+        );
+        IVerifiedAddress licenseVerifier = isDemo ? IVerifiedAddress(verifier) : IVerifiedAddress(dojang);
+        HaetaeLicense license = new HaetaeLicense(deployer, licenseVerifier);
         HaetaePolicy policy = new HaetaePolicy(license, deployer);
         HaetaeGate gate = new HaetaeGate(license, policy, deployer);
         policy.setGate(address(gate));
@@ -60,6 +82,8 @@ contract Deploy is Script {
 
         // Public record only — addresses, never keys.
         console2.log("DemoVerifier     ", address(verifier));
+        console2.log("HaetaeDojang     ", address(dojang));
+        console2.log("license verifier ", address(licenseVerifier));
         console2.log("MockUSDC         ", address(usdc));
         console2.log("HaetaeLicense    ", address(license));
         console2.log("HaetaePolicy     ", address(policy));
