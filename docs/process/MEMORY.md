@@ -1,4 +1,4 @@
-# MEMORY — HAETAE · updated 2026-07-24 · session-07 · SUBMISSION-SHAPED
+# MEMORY — HAETAE · updated 2026-07-24 · session-08 · REBOOTED + SUBMISSION-SHAPED
 
 ## Where we are
 Phase 1 CLOSED (tag phase-1-done, S03). S04 deployed and verified the
@@ -7,7 +7,11 @@ cast; S05 made all four console tabs real (Registry / Agents / Standard
 / Ledger), live-wired with fixture parity; S06 shipped the submission
 package (README judge's landing, DEMO.md stage script, Rehearsal.s.sol
 with museum guard); S07 swept the repo judge-clean (no history rewrite).
-Heads: d5776b9, c1a40a1 (S06), a84f32a (S07) — CI green on each. OPEN:
+S08 REBOOTED HISTORY (one-time, human-authorized): main = 207b359, nine
+Conventional Commits, single author bunnyyxtan, tags v0.1.0-contracts /
+v0.2.0-console-live / v0.3.0-giwa-deploy, CI green (30097708162);
+pre-reboot hashes (d5776b9, c1a40a1, a84f32a...) live only in the archived
+bundle — see HANDOFF.md. Rewrite ban back in force permanently. OPEN:
 S06 stage 2 (human: fund deployer → live rehearsal tx trail; publish →
 real URL into README/DEMO). Ratification S06+S07 pending in LOG.
 

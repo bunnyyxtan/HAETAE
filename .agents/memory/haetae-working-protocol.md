@@ -39,3 +39,13 @@ unpushed local noise. Check `git log origin/main..HEAD` before shaping.
   printf-expected list, abort on mismatch. Enforcement for the deliberate-
   staging law (an auto-commit index once leaked lcov.info into a session
   commit via soft-reset restaging).
+
+## Post-reboot law (2026-07-24)
+One-time history reboot executed (human-authorized): main is 9 curated
+Conventional Commits, single author bunnyyxtan (repo-level git config —
+verify %an/%cn pre-push). The rewrite ban is back PERMANENTLY: no
+force-push, no rebase of pushed refs, no origin ref deletion. Releases:
+annotated v0.x.y-slug tags pushed only after CI green. Old history lives
+only in the object-storage bundle (location + sha256 in repo HANDOFF.md);
+platform refs (refs/replit/agent-ledger, gitsafe-backup) still reach old
+objects locally — never push them.

@@ -1,6 +1,6 @@
 # Agent memory index
 
-- [HAETAE working protocol](haetae-working-protocol.md) — GO-gated culture: repo docs are law, HANDOFF first, never claim unrun gates green, A/B on deviations, reshape auto-commits into one law commit pre-push.
+- [HAETAE working protocol](haetae-working-protocol.md) — GO-gated: repo docs law, HANDOFF first, unrun gates never green, A/B deviations, reshape auto-commits; single author bunnyyxtan; rewrite ban (reboot spent).
 - [Foundry submodule pin drift](foundry-pin-drift.md) — this env's forge stages gitlinks at clone HEAD, not the tag; builds can silently reset pins; always peeled-SHA audit + stage gitlinks.
 - [Foundry testing quirks](foundry-testing-quirks.md) — prank eaten by call args; coverage excludes invariant campaigns; snapshot at defaults; mutable-cap invariants need per-instant admission + ledger parity.
 - [Fork rehearsal keys](fork-rehearsal-keys.md) — anvil/public dev keys carry EIP-7702 sweeper delegations on live testnets; rehearse forks with fresh keccak-derived keys + anvil_setBalance.

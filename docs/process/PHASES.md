@@ -13,7 +13,7 @@
 - Web boots on wagmi + GIWA Sepolia (91342); wallet connects; chain badge renders.
 - CI workflow runs the full gate (forge test, pnpm -r typecheck/test) on push.
 - **Human tasks:** faucet-fund PRINCIPAL/AGENT/SENTINEL; Dojang Verified Address for PRINCIPAL; up.id.
-- **Exit:** CI green on the skeleton. Tag `phase-0-done`.
+- **Exit:** CI green on the skeleton. Tag `phase-0-done`. *(Pre-reboot tag scheme — tag archived in the off-repo bundle; releases now use v0.x.y-slug, see RULES.)*
 
 ## Phase 1 — Core protocol contracts (local)
 
@@ -23,7 +23,7 @@
 - `HaetaeLicense` (SBT, dual revoke paths incl. `SENTINEL_ROLE` stub), `HaetaePolicy` (caps, budget, target + selector allowlists), `HaetaeGate` + `examples/DemoVault`, `sentinel/SentinelAuthority` (role, rate limit, reason codes).
 - Full test matrix per RULES.md R4.2–3 (except fork/AA tests — later phases).
 - **Forbidden:** frontend, services, 4337, testnet deploys.
-- **Exit:** forge test green; coverage ≥ 90%; Slither triaged. Tag `phase-1-done`.
+- **Exit:** forge test green; coverage ≥ 90%; Slither triaged. Tag `phase-1-done`. *(Pre-reboot tag scheme — tag archived in the off-repo bundle; releases now use v0.x.y-slug, see RULES.)*
 
 ## Phase 2 — GIWA integration: real Dojang, real deployment
 

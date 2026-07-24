@@ -55,3 +55,19 @@ You are a world-class full-stack engineer with 50 years of scars. You write **bo
 ## R7 · When to stop and ask the human
 
 Dojang/EAS or EntryPoint/rundler behavior deviating from GIWA docs · any dependency beyond R3 · any budget overrun · anything sending a transaction or touching stake · Sentinel rule thresholds before first live run · ambiguity in PRD acceptance criteria. One-line question, options A/B, wait.
+
+## R8 · History, authorship, and release law (post-reboot, permanent)
+
+1. **The one-time history reboot was executed 2026-07-24** under explicit
+   human authorization. Old history exists only in the off-repo bundle
+   archive (location + sha256 in HANDOFF.md). The rewrite ban is back in
+   force **permanently**: no force-push, no rebase of pushed refs, no
+   origin ref deletion — ever again.
+2. **Authorship law.** Every commit on main is authored AND committed as
+   `bunnyyxtan <129172221+bunnyyxtan@users.noreply.github.com>` (repo-level
+   git config; verify `%an/%cn` before every push). Platform checkpoint
+   auto-commits never land on main — reshape them into the session's law
+   commit(s) before pushing.
+3. **Release law.** Conventional Commits (subject ≤72 chars, no em-dashes,
+   no session markers); annotated semver tags `v0.x.y-slug`, pushed only
+   after CI is green on the tagged head.
