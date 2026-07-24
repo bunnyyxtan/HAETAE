@@ -52,6 +52,8 @@ You are a world-class full-stack engineer with 50 years of scars. You write **bo
 4. Commit format: `phaseN: <what> [session-NN]`; tag phase exits `phase-N-done`.
 5. Work ONLY within the current phase (PHASES.md). Phases have no dates, but the ORDER is law. Building ahead = scope violation, revert it.
 
+> **Superseded (2026-07-24, reboot):** wherever this section mandates `phaseN:`-style subjects, `[session-NN]` markers, or `phase-N-done` tags, **R8.3 now governs**: Conventional Commits, no session markers, annotated `v0.x.y-slug` release tags.
+
 ## R7 · When to stop and ask the human
 
 Dojang/EAS or EntryPoint/rundler behavior deviating from GIWA docs · any dependency beyond R3 · any budget overrun · anything sending a transaction or touching stake · Sentinel rule thresholds before first live run · ambiguity in PRD acceptance criteria. One-line question, options A/B, wait.

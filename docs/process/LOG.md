@@ -1,7 +1,8 @@
-# LOG — HAETAE (append-only; newest entry on top)
+# LOG — HAETAE (append-only; chronological, newest at the bottom)
 
 > **History rebooted on 2026-07-24 for a clean public release.** Commit
-> hashes cited below refer to the archived pre-reboot history (bundle
+> hashes cited in pre-reboot entries (S03–S07) refer to the archived
+> pre-reboot history (bundle
 > preserved off-repo — see HANDOFF.md for location + sha256). On-chain
 > record prior to the post-reboot redeployment belongs to the superseded
 > deployment (block number lands here when the STEP 4 redeploy broadcasts).
@@ -1199,3 +1200,20 @@ STEP 4 — STOPPED at the gas gate per order: deployer
 
 COMMIT S08: 207b359 (head of the rebooted chain) + the docs(process)
             commit that follows this entry.
+
+## S08 · Addendum 1 — review-round reconcile
+
+REVIEW architect round on the reboot docs: git state PASS (10 commits
+       fa9d7ea..734c87e all bunnyyxtan; tags peel to 51729c1 / 95ad6fa /
+       f4f85fc; no dead refs outside accepted flags). Two doc
+       contradictions found: R6.4 still mandated phaseN:/[session-NN]
+       subjects + phase-N-done tags, conflicting with R8.3; the LOG
+       title claimed newest-on-top while practice since S04 is
+       chronological bottom-append. FIX: supersession note inside R6
+       (R8.3 governs commit/tag law); LOG title corrected to
+       "chronological, newest at the bottom"; preamble narrowed to
+       pre-reboot entries (S03–S07). No pre-existing entry text touched.
+       Noted, not actioned: agent-memory protocol file carries some
+       session-specific lines (older content, still useful).
+
+COMMIT the docs(process) reconcile commit carrying this addendum.
