@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # Pinned near the local toolchain (nix forge 1.1.0-dev).
+      # Change only with a LOG.md entry.
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.1.0
+
+      # Version comes from the root package.json "packageManager" field.
+      - uses: pnpm/action-setup@v4
+
+      # Node 22 per ARCHITECTURE.md stack table (services target Node 22).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: forge gates
+        working-directory: contracts
+        # Pinned toolchain: nix forge 1.1.0-dev — change only with a LOG.md entry.
+        run: |
+          forge fmt --check
+          forge build
+          forge test -vvv
+
+      - name: typecheck
+        # Root script, not `pnpm -r typecheck`: it builds the composite
+        # lib/* declarations first (tsc --build), which leaf packages
+        # reference. Bare recursive typecheck fails with TS6305 on a
+        # fresh checkout because lib/*/dist does not exist yet.
+        run: pnpm run typecheck
+
+      - name: test
+        run: pnpm -r test
