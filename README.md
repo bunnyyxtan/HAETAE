@@ -24,17 +24,18 @@ cd contracts && forge build               # 3 · the contracts (optional)
 Every address below is Blockscout-verified. `deployments/giwa-sepolia.json` is
 the single source of truth — the console imports it directly. Deployed from
 commit
-`4b43402` (pre-reboot history, archived off-repo — see docs/process/LOG.md preamble).
+`d388a44`.
 
 | Contract | Address |
 | --- | --- |
-| [`HaetaeLicense`](https://sepolia-explorer.giwa.io/address/0x8CD2BA803a17386B7E702d2aAc3ab19BCd481d93?tab=contract) | `0x8CD2BA803a17386B7E702d2aAc3ab19BCd481d93` |
-| [`HaetaePolicy`](https://sepolia-explorer.giwa.io/address/0x57609E6E16ccE5Aa95cBCb6caf0FA96450701845?tab=contract) | `0x57609E6E16ccE5Aa95cBCb6caf0FA96450701845` |
-| [`HaetaeGate`](https://sepolia-explorer.giwa.io/address/0xD19895EFa42065c55933bf598D6862725fb0CC88?tab=contract) | `0xD19895EFa42065c55933bf598D6862725fb0CC88` |
-| [`SentinelAuthority`](https://sepolia-explorer.giwa.io/address/0xeefEAa1393FfFACa7CaEC495AD96751Cfe1489f4?tab=contract) | `0xeefEAa1393FfFACa7CaEC495AD96751Cfe1489f4` |
-| [`DemoVault`](https://sepolia-explorer.giwa.io/address/0x0E0BA989fE16673E471A77607C9a25CDb948e52f?tab=contract) | `0x0E0BA989fE16673E471A77607C9a25CDb948e52f` |
-| [`MockUSDC`](https://sepolia-explorer.giwa.io/address/0x5BCa25095105362D4bb7B699DB0accBcC329db15?tab=contract) | `0x5BCa25095105362D4bb7B699DB0accBcC329db15` |
-| [`DemoVerifier`](https://sepolia-explorer.giwa.io/address/0x9252458d577Eefc6d994dA2a8604A4920e7504a1?tab=contract) | `0x9252458d577Eefc6d994dA2a8604A4920e7504a1` |
+| [`HaetaeLicense`](https://sepolia-explorer.giwa.io/address/0x08b2233C84C1418118AF66F23Bc07Cee1C26C9c1?tab=contract) | `0x08b2233C84C1418118AF66F23Bc07Cee1C26C9c1` |
+| [`HaetaePolicy`](https://sepolia-explorer.giwa.io/address/0xc0AF0Fa07E3925B57b158Ac116661c371e869D91?tab=contract) | `0xc0AF0Fa07E3925B57b158Ac116661c371e869D91` |
+| [`HaetaeGate`](https://sepolia-explorer.giwa.io/address/0xf9f209e562c56a79da5999458895346E3fE2Fa1f?tab=contract) | `0xf9f209e562c56a79da5999458895346E3fE2Fa1f` |
+| [`SentinelAuthority`](https://sepolia-explorer.giwa.io/address/0x875Fa4270487BE873Bfc8e1EB7d15ff036632c18?tab=contract) | `0x875Fa4270487BE873Bfc8e1EB7d15ff036632c18` |
+| [`DemoVault`](https://sepolia-explorer.giwa.io/address/0x4552795B2eDb138208DE8E966E40E806716E7820?tab=contract) | `0x4552795B2eDb138208DE8E966E40E806716E7820` |
+| [`MockUSDC`](https://sepolia-explorer.giwa.io/address/0x39a85840dE553a24836468b7a87b0Cf9cCeB0a06?tab=contract) | `0x39a85840dE553a24836468b7a87b0Cf9cCeB0a06` |
+| [`HaetaeDojang`](https://sepolia-explorer.giwa.io/address/0x2Ad209600706156Bf3b9313e55Bff0a6A372870E?tab=contract) | `0x2Ad209600706156Bf3b9313e55Bff0a6A372870E` |
+| [`DemoVerifier`](https://sepolia-explorer.giwa.io/address/0x49cF5DB30bfe0504603ea1f454B7E43Ad1d7F63D?tab=contract) | `0x49cF5DB30bfe0504603ea1f454B7E43Ad1d7F63D` |
 
 ## The five beats — the story, already on-chain
 
@@ -59,7 +60,7 @@ transactions:
 Anyone can read the revoked license, right now:
 
 ```sh
-cast call 0x8CD2BA803a17386B7E702d2aAc3ab19BCd481d93 \
+cast call 0x08b2233C84C1418118AF66F23Bc07Cee1C26C9c1 \
   'licenseById(uint256)((address,address,uint64,bytes32,uint8))' 3 \
   --rpc-url https://sepolia-rpc.giwa.io
 ```
@@ -68,9 +69,10 @@ cast call 0x8CD2BA803a17386B7E702d2aAc3ab19BCd481d93 \
 is permissionless: anyone can attest any address, so a license minted
 through it proves flow, not identity. It stands in for GIWA's Verified
 Address rail solely so the Phase 2 demo runs end-to-end on today's testnet.
-Nothing downstream of this deployment may treat its licenses as
-KYC-anchored; production swaps DemoVerifier for the real Dojang / Verified
-Address attester before anything leaves testnet.
+The license gate now runs through `HaetaeDojang` — a dual-lane verifier
+(GIWA DojangScroll Upbit lane OR a registered HAETAE EAS attestation).
+On this testnet the HAETAE lane is live with a project attester; production
+narrows to the Upbit Dojang lane by constructor arguments alone.
 
 ## Stack
 
