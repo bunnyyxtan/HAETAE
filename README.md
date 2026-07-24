@@ -24,44 +24,49 @@ cd contracts && forge build               # 3 · the contracts (optional)
 Every address below is Blockscout-verified. `deployments/giwa-sepolia.json` is
 the single source of truth — the console imports it directly. Deployed from
 commit
-`d388a44`.
+`5286c97`.
 
 | Contract | Address |
 | --- | --- |
-| [`HaetaeLicense`](https://sepolia-explorer.giwa.io/address/0x08b2233C84C1418118AF66F23Bc07Cee1C26C9c1?tab=contract) | `0x08b2233C84C1418118AF66F23Bc07Cee1C26C9c1` |
-| [`HaetaePolicy`](https://sepolia-explorer.giwa.io/address/0xc0AF0Fa07E3925B57b158Ac116661c371e869D91?tab=contract) | `0xc0AF0Fa07E3925B57b158Ac116661c371e869D91` |
-| [`HaetaeGate`](https://sepolia-explorer.giwa.io/address/0xf9f209e562c56a79da5999458895346E3fE2Fa1f?tab=contract) | `0xf9f209e562c56a79da5999458895346E3fE2Fa1f` |
-| [`SentinelAuthority`](https://sepolia-explorer.giwa.io/address/0x875Fa4270487BE873Bfc8e1EB7d15ff036632c18?tab=contract) | `0x875Fa4270487BE873Bfc8e1EB7d15ff036632c18` |
-| [`DemoVault`](https://sepolia-explorer.giwa.io/address/0x4552795B2eDb138208DE8E966E40E806716E7820?tab=contract) | `0x4552795B2eDb138208DE8E966E40E806716E7820` |
-| [`MockUSDC`](https://sepolia-explorer.giwa.io/address/0x39a85840dE553a24836468b7a87b0Cf9cCeB0a06?tab=contract) | `0x39a85840dE553a24836468b7a87b0Cf9cCeB0a06` |
-| [`HaetaeDojang`](https://sepolia-explorer.giwa.io/address/0x2Ad209600706156Bf3b9313e55Bff0a6A372870E?tab=contract) | `0x2Ad209600706156Bf3b9313e55Bff0a6A372870E` |
-| [`DemoVerifier`](https://sepolia-explorer.giwa.io/address/0x49cF5DB30bfe0504603ea1f454B7E43Ad1d7F63D?tab=contract) | `0x49cF5DB30bfe0504603ea1f454B7E43Ad1d7F63D` |
+| [`HaetaeLicense`](https://sepolia-explorer.giwa.io/address/0x1a70E5DA8895bEc96eCa6c87E29988b380dFEe40?tab=contract) | `0x1a70E5DA8895bEc96eCa6c87E29988b380dFEe40` |
+| [`HaetaePolicy`](https://sepolia-explorer.giwa.io/address/0x6f5Bb9764847d0500262D7F092E4a6999E0b6a33?tab=contract) | `0x6f5Bb9764847d0500262D7F092E4a6999E0b6a33` |
+| [`HaetaeGate`](https://sepolia-explorer.giwa.io/address/0x6600dC76377089D814A6575d6c43D19D7D66dF99?tab=contract) | `0x6600dC76377089D814A6575d6c43D19D7D66dF99` |
+| [`SentinelAuthority`](https://sepolia-explorer.giwa.io/address/0x145f77a1545f3A5953477f2E4c9EC02d99327976?tab=contract) | `0x145f77a1545f3A5953477f2E4c9EC02d99327976` |
+| [`DemoVault`](https://sepolia-explorer.giwa.io/address/0xB57D465b97A1e9db46BB063E410E94765C9Dc564?tab=contract) | `0xB57D465b97A1e9db46BB063E410E94765C9Dc564` |
+| [`MockUSDC`](https://sepolia-explorer.giwa.io/address/0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19?tab=contract) | `0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19` |
+| [`HaetaeDojang`](https://sepolia-explorer.giwa.io/address/0x1bD4b3284B73095179f00Ff566C9165B57ec9648?tab=contract) | `0x1bD4b3284B73095179f00Ff566C9165B57ec9648` |
+| [`DemoVerifier`](https://sepolia-explorer.giwa.io/address/0xd657fc11C4dff7955f56838055b5e87114457498?tab=contract) | `0xd657fc11C4dff7955f56838055b5e87114457498` |
 
-## The five beats — the story, already on-chain
+The live registry starts empty by design — no fictional demo cast is seeded.
+Scripted fixtures live exclusively behind the console's `?demo=fixtures` mode
+and are labeled as such.
 
-The seeded demo cast played the whole HAETAE arc once, in five public
-transactions:
+## The five beats — one real rehearsal, already on-chain
 
-1. **The legal trade.** swap-runner moves 1,200 tUSDC through dex-alpha; the
-   Gate walks license → scope → venue → cap and lets it pass.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0xafdb0e58f9ef5eef63cec48c8f2a494eff21205ab34382568fb30b6fe85e2749)
-2. **The cap refusal.** The same agent asks for 4,500 with 3,800 left in its
+A rehearsal agent (scratch key, scope `rehearsal`, licensed by a
+Dojang-verified principal) played the whole HAETAE arc exactly once, in five
+public transactions:
+
+1. **The legal trade.** The rehearsal agent moves 300 tUSDC through dex-alpha;
+   the Gate walks license → scope → venue → cap and lets it pass.
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0xc77cf848e837abcd0b5ae966707fe84933231ba6de622f5ba23a5746177558ec)
+2. **The cap refusal.** The same agent asks for 1,900 with 1,700 left in its
    day budget — refused, on-chain, in public.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0xca39a90cb8ff47ec815e507b8b403aa7b0abeac2e493e43f318bd680ae5459fc)
-3. **The injection.** A prompt-injected yield-scout aims 800 tUSDC at the
-   attacker's venue — `VenueNotAllowed`.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0xe25cfaa4748c502ed738196b46b428aeb5cf5dd3bd14b6fcd0a54ff3ebcc734d)
-4. **The verdict.** The Sentinel flags yield-scout with a hash-anchored reason;
-   license 3 is Revoked in one transaction.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x7efd2f6ec177c9c16660292c2c43c6fde8ca50b79f7d27ebd979494b026e2c45)
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0xaeb00c188fc6325cfb7ad3177b17ae7fe2e66a46eeac29153fe68f9481d7f32d)
+3. **The injection.** The agent aims 100 tUSDC at the attacker's venue —
+   `VenueNotAllowed`.
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x4296fb379086c348bf2b50249012825f01e2cdda03f6aa5f7cefe6b2d78feb32)
+4. **The verdict.** The Sentinel flags the agent with a hash-anchored reason;
+   license 1 is Revoked in one transaction.
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x823f99c05ba7940e53e26f9b8d3b326f05e52e6f015952fa8bb52ce7d2ac1b37)
 5. **The ghost.** The revoked agent tries once more — refused, forever.
-   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x5cb705307fc4dc9914d9f4142e1d69c4ad35cbbd743f87c829ea7bce82eed257)
+   [tx ↗](https://sepolia-explorer.giwa.io/tx/0x59e854c885a1a7707175ff3c2ca4735cc005732b0d0bd1fc439fa4aeb0e82de6)
 
 Anyone can read the revoked license, right now:
 
 ```sh
-cast call 0x08b2233C84C1418118AF66F23Bc07Cee1C26C9c1 \
-  'licenseById(uint256)((address,address,uint64,bytes32,uint8))' 3 \
+cast call 0x1a70E5DA8895bEc96eCa6c87E29988b380dFEe40 \
+  'licenseById(uint256)((address,address,uint64,bytes32,uint8))' 1 \
   --rpc-url https://sepolia-rpc.giwa.io
 ```
 

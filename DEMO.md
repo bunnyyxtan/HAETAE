@@ -12,8 +12,10 @@ walk offline. Fixture-mode differences are marked ⬦ below.
 
 ## Before the lights (T-10 min)
 
-1. Open `/console` — ticker pulsing, Registry shows the museum cast:
-   HT-0001..0004 seeded, plus HT-0005, the ghost a tester left on-chain.
+1. Open `/console` — ticker pulsing. The live registry carries no fictional
+   cast: expect the `rehearsal` row (Revoked) from the recorded arc, plus any
+   agents licensed since. The scripted eight-row theater lives exclusively
+   behind `?demo=fixtures` and is labeled as fixtures.
 2. If playing the live beats (the 2:00 section): paste the live-beats block
    (bottom of this file) into the terminal — derive the fresh key, do **not**
    run yet.
@@ -23,17 +25,18 @@ walk offline. Fixture-mode differences are marked ⬦ below.
 
 - Say: "Every AI agent here carries a license a human minted. This is live —
   the block number is GIWA Sepolia, right now." (point at the ticker)
-- Point: HT-0003 in ash — **REVOKED** — and HT-0005, the tester's ghost.
-- Expect: five rows, pulsing ticker, no wallet needed.
+- Point: the `rehearsal` row in ash — **REVOKED** — the recorded arc's agent.
+- Expect: a sparse, honest registry, pulsing ticker, no wallet needed.
 - ⬦ fixtures: eight rows, three ghosts — same layout, zero chain.
 
 ## 0:30 · Agents — the dossiers
 
-- Click **Agents**, then **Papers** on swap-runner.
+- Click **Agents**, then **Papers** on the rehearsal agent.
 - Expect: identity fields up top (license nº, scope, expiry), caps and venues
   below. Say: "The license is identity; caps and venues are policy — the
   principal can tighten them mid-day without touching the license."
-- Expect in the Court Record: the legal trade and the cap refusal (B1, B2).
+- Expect in the Court Record: the full arc R1–R5 — trade, two refusals,
+  the sentinel verdict, the ghost.
 - Close with Esc.
 
 ## 1:10 · Ledger — the court record
@@ -53,8 +56,8 @@ walk offline. Fixture-mode differences are marked ⬦ below.
 
 ## 2:00 · The beats, live — fresh agent, full arc
 
-*(Skip in fixture mode — narrate the seeded five beats from the README table
-instead.)*
+*(Skip in fixture mode — narrate the recorded rehearsal beats from the README
+table instead.)*
 
 - Terminal: run the prepared live-beats block. On ~1s blocks the whole arc
   lands in well under a minute.
@@ -73,21 +76,21 @@ instead.)*
 
 ## The live-beats block (prep at T-10, run at 2:00)
 
-Standing rules this block obeys: the seeded cast HT-0001..0005 is the museum
-exhibit — rehearsals and live demos never touch it; every show uses a fresh
-agent with a fresh UTC day budget (ruling, S06 ratification). Keys live in
-env only — never in files, logs, chat, or argv (S04 rule). The script also
-enforces the museum rule itself: a rehearsal key that derives a cast address,
-or an address carrying any non-`rehearsal`-scoped license, aborts before a
-single transaction is sent.
+Standing rules this block obeys: every show uses a fresh agent with a fresh
+UTC day budget (ruling, S06 ratification) — prior rehearsal records and any
+real licensed agents are never touched. Keys live in env only — never in
+files, logs, chat, or argv (S04 rule). The script enforces this itself: a
+rehearsal key that derives a core cast address (principal / sentinel /
+deployer), or an address carrying any non-`rehearsal`-scoped license, aborts
+before a single transaction is sent.
 
 ```sh
 cd contracts
-export LICENSE_ADDR=0x08b2233C84C1418118AF66F23Bc07Cee1C26C9c1
-export POLICY_ADDR=0xc0AF0Fa07E3925B57b158Ac116661c371e869D91
-export SENTINEL_AUTH_ADDR=0x875Fa4270487BE873Bfc8e1EB7d15ff036632c18
-export VAULT_ADDR=0x4552795B2eDb138208DE8E966E40E806716E7820
-export USDC_ADDR=0x39a85840dE553a24836468b7a87b0Cf9cCeB0a06
+export LICENSE_ADDR=0x1a70E5DA8895bEc96eCa6c87E29988b380dFEe40
+export POLICY_ADDR=0x6f5Bb9764847d0500262D7F092E4a6999E0b6a33
+export SENTINEL_AUTH_ADDR=0x145f77a1545f3A5953477f2E4c9EC02d99327976
+export VAULT_ADDR=0xB57D465b97A1e9db46BB063E410E94765C9Dc564
+export USDC_ADDR=0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19
 # DEPLOYER_PK / PRINCIPAL_PK / SENTINEL_PK are already environment secrets.
 # Fresh show, fresh agent — derive a NEW key every run; never reuse, never echo:
 export REHEARSAL_AGENT_PK=0x$(openssl rand -hex 32)
@@ -105,7 +108,7 @@ the agent ends Revoked.
 ## Failure ladder (on stage)
 
 1. **RPC slow** — the walk still works; skip the live beats, narrate the
-   seeded B1–B5 from the README table.
+   recorded rehearsal beats from the README table.
 2. **RPC dead** — `?demo=fixtures&delay=0`: the full walk, offline, zero chain.
 3. **Laptop dead** — the README beat table *is* the demo: five Blockscout
    links, same story, any browser.
