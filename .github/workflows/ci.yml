@@ -78,6 +78,9 @@ jobs:
             if ! echo "$S" | grep -qE '^(feat|fix|docs|test|refactor|chore|ci|perf|style|build)(\([a-z0-9-]+\))?!?: .+' || [ "${#S}" -gt 72 ]; then
               echo "SUBJECT BREACH $C: '$S'"; FAIL=1
             fi
+            if echo "$S" | grep -q $'\u2014'; then
+              echo "SUBJECT BREACH $C: em-dash in subject '$S'"; FAIL=1
+            fi
           done
           [ "$FAIL" = 0 ] || exit 1
           echo "commit law: all clear"
