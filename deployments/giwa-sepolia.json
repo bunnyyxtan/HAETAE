@@ -1,0 +1,207 @@
+{
+  "chain": "GIWA Sepolia",
+  "chainId": 91342,
+  "rpc": "https://sepolia-rpc.giwa.io",
+  "explorer": "https://sepolia-explorer.giwa.io",
+  "deployedFrom": {
+    "repo": "bunnyyxtan/HAETAE",
+    "commit": "4b43402d0eb1bf67718ab09930f60c2e52990e81"
+  },
+  "recordedAt": "2026-07-24T07:43:28Z",
+  "pins": {
+    "openzeppelin-contracts": "5fd1781b1454fd1ef8e722282f86f9293cacf256",
+    "forge-std": "77041d2ce690e692d6e03cc812b57d1ddaa4d505",
+    "account-abstraction": "7af70c8993a6f42973f520ae0752386a5032abe7",
+    "eas-contracts": "d223e17208aa110dd5ec694d77324a2321d93201"
+  },
+  "deployer": "0x3Af656d9Ad1307543623133bDB64A39599E08E4B",
+  "contracts": {
+    "DemoVerifier": {
+      "address": "0x9252458d577Eefc6d994dA2a8604A4920e7504a1",
+      "deployTx": "0x83a7ef5ef3a57cd43ca332163427c658d02364ff0deac8f5ae761e10ced02ed3",
+      "block": 31533609,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x9252458d577Eefc6d994dA2a8604A4920e7504a1?tab=contract"
+    },
+    "MockUSDC": {
+      "address": "0x5BCa25095105362D4bb7B699DB0accBcC329db15",
+      "deployTx": "0x97f26e5eea30ca160d4b3a49dd00f4c70fe356e7b62094a8e824b77d66f991b5",
+      "block": 31533609,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x5BCa25095105362D4bb7B699DB0accBcC329db15?tab=contract"
+    },
+    "HaetaeLicense": {
+      "address": "0x8CD2BA803a17386B7E702d2aAc3ab19BCd481d93",
+      "deployTx": "0x964aab1d4eedf0a2234b3b7cf045c2a39d7cf31f62f8b91c7dda0ef447a431a0",
+      "block": 31533609,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x8CD2BA803a17386B7E702d2aAc3ab19BCd481d93?tab=contract"
+    },
+    "HaetaePolicy": {
+      "address": "0x57609E6E16ccE5Aa95cBCb6caf0FA96450701845",
+      "deployTx": "0xf8f7bec506491d032b5a67fea45b06c25a7af1ec7e1f7d1d644856dcd1c10647",
+      "block": 31533609,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x57609E6E16ccE5Aa95cBCb6caf0FA96450701845?tab=contract"
+    },
+    "HaetaeGate": {
+      "address": "0xD19895EFa42065c55933bf598D6862725fb0CC88",
+      "deployTx": "0xd195923e9ef95081a34ad193f013706f3e80a7f083dfc6d0b9c268b61c2608d8",
+      "block": 31533609,
+      "verified": "https://sepolia-explorer.giwa.io/address/0xD19895EFa42065c55933bf598D6862725fb0CC88?tab=contract"
+    },
+    "SentinelAuthority": {
+      "address": "0xeefEAa1393FfFACa7CaEC495AD96751Cfe1489f4",
+      "deployTx": "0x8448ddaa5525e125fdd03d4d42a3178808454ae95c27e71f60d4bc331edd2d2c",
+      "block": 31533609,
+      "verified": "https://sepolia-explorer.giwa.io/address/0xeefEAa1393FfFACa7CaEC495AD96751Cfe1489f4?tab=contract"
+    },
+    "DemoVault": {
+      "address": "0x0E0BA989fE16673E471A77607C9a25CDb948e52f",
+      "deployTx": "0x532e8241870e8d83058772ab66ffa07d1a05a35376b8921da132435ae50588be",
+      "block": 31533609,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x0E0BA989fE16673E471A77607C9a25CDb948e52f?tab=contract"
+    }
+  },
+  "wiring": [
+    {
+      "function": "setGate(address)",
+      "tx": "0x7d03b32f4d216510aab55abcef00aaa1ddabd6c7392f4cab46394067538a264b",
+      "block": 31533609
+    },
+    {
+      "function": "grantRole(bytes32,address)",
+      "tx": "0xecf9c9eb7c16501eba9b4060ffb6cf4403ed77c1ca495365fa028747e77c7e91",
+      "block": 31533609
+    },
+    {
+      "function": "setWatcher(address,bool)",
+      "tx": "0xff9e261e24de66efe43e35c6d4bd0ac465eb4ca0113888a613a95f8fcdfd42cf",
+      "block": 31533609
+    },
+    {
+      "function": "setCaller(address,bool)",
+      "tx": "0x9a5ad7cac2747f4a869ec0de83b5e3e1978f49bace45133d83fe1683cd139e04",
+      "block": 31533609
+    },
+    {
+      "function": "mint(address,uint256)",
+      "tx": "0xfac5d0d010b832be72f221c6177daf3c72fddf803fdcdc76ccb236b6e9a89b1c",
+      "block": 31533609
+    }
+  ],
+  "cast": {
+    "principal": {
+      "address": "0xd3eB4F8a53a16D12c6F144199a7a02Bc248485db"
+    },
+    "sentinel_watcher": {
+      "address": "0x47b7644dd0A81901a656C27808b898FE18Fc0B51"
+    },
+    "treasury-keeper": {
+      "address": "0x5d5f5175f304fa30b40372305d998ccbf774e750",
+      "licenseId": 1,
+      "scope": "treasury",
+      "capPerDayUSDC": 10000,
+      "venue": "treasury-desk",
+      "keyless": true
+    },
+    "swap-runner": {
+      "address": "0xcBB38C398459b6cfbe381E06eE187294269FecE6",
+      "licenseId": 2,
+      "scope": "swap",
+      "capPerDayUSDC": 5000,
+      "venue": "dex-alpha"
+    },
+    "yield-scout": {
+      "address": "0x61097FE1DcE028c55C69F02493879bca97433255",
+      "licenseId": 3,
+      "scope": "yield",
+      "capPerDayUSDC": 2500,
+      "venue": "yield-farm",
+      "status": "Revoked"
+    },
+    "grant-scribe": {
+      "address": "0x8a165b2bfa1c7555bbc088c811b0b740f0273b15",
+      "licenseId": 4,
+      "scope": "grants",
+      "capPerDayUSDC": 1000,
+      "venue": "grants-desk",
+      "keyless": true
+    }
+  },
+  "venues": {
+    "dex-alpha": "0xa933721ac6dbc631de3c9fad0e1ace276189b983",
+    "yield-farm": "0x38178ce3be474a91d3afa4e2facc3234f74d4a65",
+    "treasury-desk": "0x5b0f79ede27a2e8eb524ab529b90d74e814985d0",
+    "grants-desk": "0x1c87d106cc1b5791fd6ae50d1a26b1d9374eefa1",
+    "attacker-sink": "0x0a56e8d0f652a35ed1453e300517dfefc4195caf"
+  },
+  "seed": {
+    "mints": {
+      "1_treasury-keeper": {
+        "tx": "0x986e1ff90a2aeb80bef815f7d92bef7bc1b8c0548d2e8357074b0e409f89499a",
+        "block": 31533718
+      },
+      "2_swap-runner": {
+        "tx": "0x7106b5b01b0cc26ab24fb33db6d63cfe19e66dad9d34c34594b41fecb76e9db6",
+        "block": 31533721
+      },
+      "3_yield-scout": {
+        "tx": "0x86efa938f9b9c3e0d65688020192ff743f85ee9d08a93f9b3b8d6af354f7cd0a",
+        "block": 31533723
+      },
+      "4_grant-scribe": {
+        "tx": "0x10cb3bea8756e1943729b3a220e5f52a117103b1e22c8d3cac2cd5acccb51025",
+        "block": 31533726
+      }
+    },
+    "beats": {
+      "B1_legal_trade": {
+        "tx": "0x73139ffef4e5d2f38692cad5cd70e9b529ab29f0911e1d55c0e7ff79775474d1",
+        "block": 31533748,
+        "agent": "swap-runner",
+        "venue": "dex-alpha",
+        "amountUSDC": 1200,
+        "result": "TradeExecuted"
+      },
+      "B2_cap_refusal": {
+        "tx": "0x28b416e0c134a98b9fdcf2baa183fd8f0cf8527cbc8d2453c1038498bb1e9eb4",
+        "block": 31533751,
+        "agent": "swap-runner",
+        "venue": "dex-alpha",
+        "amountUSDC": 4500,
+        "result": "TradeRefused (cap 5000/day, 3800 remaining)"
+      },
+      "B3_venue_refusal": {
+        "tx": "0x7c77a8205405a9e40f8a1a2ca0289fa99985b59a4e35932da044988894ae71f1",
+        "block": 31533753,
+        "agent": "yield-scout",
+        "venue": "attacker-sink",
+        "amountUSDC": 800,
+        "result": "TradeRefused (venue not allowed; the injection beat)"
+      },
+      "B4_sentinel_flag": {
+        "tx": "0xca9c0ab9a98a4ea91f8bdba6b7895e52f7a82866e6ca71aaee902b9a05c335b9",
+        "block": 31533756,
+        "agent": "sentinel -> yield-scout",
+        "result": "Flagged + license 3 Revoked"
+      },
+      "B5_ghost_refusal": {
+        "tx": "0x96fa05c937652f86171d47a6d51c1845038030319dd257c3a55204fec4b6c794",
+        "block": 31533758,
+        "agent": "yield-scout",
+        "venue": "yield-farm",
+        "amountUSDC": 100,
+        "result": "TradeRefused (license Revoked)"
+      }
+    },
+    "reasonHash": "0x2fa19cc8c7ecacc04963bf1a1a47376dc49be626ee8e09724f09a8006a47ecf5",
+    "reasonPreimage": "HAETAE demo S04: prompt-injection exfiltration attempt on yield-scout; reason doc r1"
+  },
+  "evidence": {
+    "licenseById3": {
+      "principal": "0xd3eB4F8a53a16D12c6F144199a7a02Bc248485db",
+      "agent": "0x61097FE1DcE028c55C69F02493879bca97433255",
+      "expiry": 1792654802,
+      "scope": "yield",
+      "status": "Revoked (2)"
+    },
+    "readCmd": "cast call 0x8CD2BA803a17386B7E702d2aAc3ab19BCd481d93 'licenseById(uint256)((address,address,uint64,bytes32,uint8))' 3 --rpc-url https://sepolia-rpc.giwa.io"
+  }
+}
