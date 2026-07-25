@@ -1,6 +1,6 @@
 // Typed view over the committed deployment record — the single source of truth
 // for live addresses. deployments/giwa-sepolia.json is written by the STEP 4
-// naming-sweep clean redeploy (commit 13b65ac, empty live registry);
+// naming-sweep clean redeploy (commit a394800, empty live registry);
 // nothing here is hand-maintained.
 import record from "../../../deployments/giwa-sepolia.json";
 import { getAddress, type Address } from "viem";

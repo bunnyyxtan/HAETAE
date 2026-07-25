@@ -24,7 +24,7 @@ cd contracts && forge build               # 3 · the contracts (optional)
 Every address below is Blockscout-verified. `deployments/giwa-sepolia.json` is
 the single source of truth — the console imports it directly. Deployed from
 commit
-`13b65ac`.
+`a394800`.
 
 | Contract | Address |
 | --- | --- |
