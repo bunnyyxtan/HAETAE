@@ -565,6 +565,10 @@ video {
     --ink-2: #2a2622;
     --stone: #625b50;
     --stone-2: #948b7c;
+    /* horizontal section padding; --gx-l reserves the side-rail gutter where
+       the rail is visible but the centered 1440px column has no spare margin */
+    --gx: clamp(20px, 5vw, 96px);
+    --gx-l: var(--gx);
     --vermillion: #c8341c; /* SEAL / active / revocation — one strict meaning */
     --vermillion-2: #a02a17;
     --jade: #2f5d50; /* listening / allowed */
@@ -938,7 +942,7 @@ a {
 /* Section container */
 .section {
     position: relative;
-    padding: clamp(80px, 9vw, 140px) clamp(20px, 5vw, 96px);
+    padding: clamp(80px, 9vw, 140px) var(--gx) clamp(80px, 9vw, 140px) var(--gx-l);
     max-width: 1440px;
     margin: 0 auto;
 }
@@ -1115,6 +1119,19 @@ a {
 @media (min-width: 1100px) {
     .side-rail { display: flex; }
 }
+.side-rail.is-suppressed {
+    opacity: 0;
+    pointer-events: none;
+}
+.side-rail {
+    transition: opacity 0.18s var(--ease);
+}
+/* reserved gutter: rail column (left offset + heart/ticks width) never
+   shares pixels with prose. Above 1700px the centered column's own margin
+   ((100vw - 1440px) / 2 >= 130px) clears the rail naturally. */
+@media (min-width: 1100px) and (max-width: 1699px) {
+    :root { --gx-l: 136px; }
+}
 
 .rail-heart {
     display: flex;
@@ -1191,7 +1208,7 @@ a {
 .hero {
     position: relative;
     min-height: 100vh;
-    padding: 150px clamp(20px, 5vw, 96px) 100px;
+    padding: 150px var(--gx) 100px var(--gx-l);
     max-width: 1440px;
     margin: 0 auto;
     display: grid;
@@ -1438,11 +1455,11 @@ a {
     position: relative;
     max-width: 1440px;
     margin: 0 auto;
-    padding: clamp(40px, 6vw, 80px) clamp(20px, 5vw, 96px) 0;
+    padding: clamp(40px, 6vw, 80px) var(--gx) 0 var(--gx-l);
     display: flex;
-    justify-content: flex-end;
-    align-items: baseline;
-    gap: 24px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
     pointer-events: none;
     min-height: clamp(180px, 22vw, 300px);
     overflow: visible;
@@ -1458,10 +1475,7 @@ a {
     display: block;
 }
 .fold-label {
-    position: absolute;
-    top: 50%;
-    right: clamp(20px, 5vw, 96px);
-    transform: translateY(-50%);
+    order: -1;
     font-family: "JetBrains Mono", monospace;
     font-size: 11px;
     letter-spacing: 0.24em;
@@ -1488,7 +1502,7 @@ a {
 .ceremony-inner {
     max-width: 1440px;
     margin: 0 auto;
-    padding: 0 clamp(20px, 5vw, 96px);
+    padding: 0 var(--gx) 0 var(--gx-l);
     position: relative;
     z-index: 2;
 }
@@ -1813,7 +1827,7 @@ a {
     gap: 20px;
     max-width: 1440px;
     margin: 0 auto;
-    padding: 0 clamp(20px, 5vw, 96px) 40px;
+    padding: 0 var(--gx) 40px var(--gx-l);
 }
 .origin-head .rule {
     flex: 1;
@@ -1826,7 +1840,7 @@ a {
     height: clamp(520px, 68vh, 780px);
     max-width: 1600px;
     margin: 0 auto;
-    padding: 0 clamp(20px, 5vw, 96px);
+    padding: 0 var(--gx) 0 var(--gx-l);
     overflow: hidden;
 }
 
@@ -1849,7 +1863,7 @@ a {
 .origin-prose {
     position: absolute;
     bottom: clamp(24px, 5vw, 60px);
-    right: clamp(20px, 5vw, 96px);
+    right: var(--gx);
     max-width: 460px;
     z-index: 3;
     text-align: right;
@@ -1885,7 +1899,7 @@ a {
 .origin-footnote {
     position: absolute;
     bottom: clamp(24px, 5vw, 60px);
-    left: clamp(20px, 5vw, 96px);
+    left: var(--gx-l);
     z-index: 3;
     display: flex;
     flex-direction: column;
@@ -1913,7 +1927,7 @@ a {
 }
 
 .cta-final {
-    padding: clamp(80px, 10vw, 160px) clamp(20px, 5vw, 96px);
+    padding: clamp(80px, 10vw, 160px) var(--gx) clamp(80px, 10vw, 160px) var(--gx-l);
     text-align: left;
     max-width: 1440px;
     margin: 0 auto;

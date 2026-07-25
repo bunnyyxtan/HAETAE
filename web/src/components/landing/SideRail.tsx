@@ -16,6 +16,42 @@ export default function SideRail() {
     const [active, setActive] = useState("top");
     const [block, setBlock] = useState(8412004);
     const [tick, setTick] = useState(0);
+    const [suppressed, setSuppressed] = useState(false);
+
+    // Full-bleed art bands (origin monument, marquee) afford no gutter — the
+    // tracker hides entirely while they cross its vertical band. Layout rule,
+    // not a z-index trick: hidden beats half-present.
+    useEffect(() => {
+        const check = () => {
+            const rail = document.querySelector(".side-rail");
+            const rr = rail?.getBoundingClientRect();
+            // measured band + margin; fall back to a generous center band
+            // generous approach margin: the fade must complete before contact,
+            // even on fast flicks
+            const top = (rr && rr.height > 0 ? rr.top : window.innerHeight / 2 - 260) - 300;
+            const bottom = (rr && rr.height > 0 ? rr.bottom : window.innerHeight / 2 + 260) + 300;
+            const hit = [".origin-full", ".marquee"].some((sel) => {
+                const el = document.querySelector(sel);
+                if (!el) return false;
+                const r = el.getBoundingClientRect();
+                return r.top < bottom && r.bottom > top;
+            });
+            setSuppressed(hit);
+        };
+        let raf = 0;
+        const onScroll = () => {
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(check);
+        };
+        check();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll, { passive: true });
+        return () => {
+            cancelAnimationFrame(raf);
+            window.removeEventListener("scroll", onScroll);
+            window.removeEventListener("resize", onScroll);
+        };
+    }, []);
 
     // "chain heartbeat" — increments a block every ~1s
     useEffect(() => {
@@ -52,7 +88,11 @@ export default function SideRail() {
     };
 
     return (
-        <aside className="side-rail" aria-label="Chapter navigation" data-testid="side-rail">
+        <aside
+            className={`side-rail ${suppressed ? "is-suppressed" : ""}`}
+            aria-label="Chapter navigation"
+            data-testid="side-rail"
+        >
             {/* chain heartbeat */}
             <div className="rail-heart" data-testid="rail-heartbeat">
                 <motion.span

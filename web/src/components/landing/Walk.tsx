@@ -39,7 +39,7 @@ const STEPS = [
 
 export default function Walk() {
     return (
-        <section id="walk" data-testid="section-walk" style={{ padding: "120px 6vw 80px" }}>
+        <section id="walk" data-testid="section-walk" style={{ padding: "120px var(--gx) 80px var(--gx-l)" }}>
             <div className="origin-head" style={{ marginBottom: 48 }}>
                 <span className="chapter-num">06 · The Walk</span>
                 <div className="rule" />
