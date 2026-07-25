@@ -92,10 +92,8 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
         setPhaseSync("ghost");
         setProgress(1);
         onRevoked(agent); // Mutates row, switches opener, fires aria-live
-        timeoutRef.current = setTimeout(() => {
-            timeoutRef.current = null;
-            requestClose();
-        }, 2000); // 2 second pause before closing
+        // No auto-close (micro-task ruling): the ghost verdict persists until
+        // dismissed — Escape, overlay, close, or the Done button end it.
     };
 
     const fail = (msg: string) => {
@@ -344,7 +342,7 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
 
     return (
         <div className="co-modal-overlay" onClick={(e) => {
-            if (e.target === e.currentTarget && !ghosted && !txLocked) requestClose();
+            if (e.target === e.currentTarget && !txLocked) requestClose();
         }}>
             <motion.div
                 ref={dialogRef}
@@ -360,7 +358,7 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
             >
                 <div className="co-modal-header" style={{ borderBottom: "none", paddingBottom: 0 }}>
                     <h2 className="co-modal-title" style={{ color: "var(--vermillion)" }}>Revoke License</h2>
-                    {!ghosted && !txLocked && (
+                    {!txLocked && (
                         <button className="co-modal-close" onClick={requestClose} aria-label="Close">×</button>
                     )}
                 </div>
@@ -450,6 +448,12 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
                     <div style={{ marginTop: txHash && (pending || ghosted || failed) ? 12 : 24, height: 24, textAlign: "center", color: ghosted ? "var(--vermillion)" : failed ? "var(--vermillion)" : "var(--stone)", fontFamily: "JetBrains Mono, monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em" }}>
                         {statusLine}
                     </div>
+
+                    {ghosted && (
+                        <button className="co-btn-primary" style={{ width: "100%", marginTop: 12 }} onClick={requestClose}>
+                            Done
+                        </button>
+                    )}
                 </div>
             </motion.div>
         </div>

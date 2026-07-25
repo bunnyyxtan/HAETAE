@@ -137,10 +137,8 @@ export default function MintModal({
     const seal = (result: MintResult) => {
         setPhaseSync("sealed");
         onMinted(result); // parent appends (fixture) or silently refetches (live)
-        timerRef.current = setTimeout(() => {
-            timerRef.current = null;
-            requestClose();
-        }, 2400);
+        // No auto-close (micro-task ruling): the sealed verdict persists until
+        // dismissed — a verdict you cannot read is not a verdict.
     };
 
     const commit = () => {
@@ -391,6 +389,12 @@ export default function MintModal({
                             {phase === "failed" && (
                                 <button className="co-btn-primary" onClick={() => setPhaseSync("review")}>
                                     Try again
+                                </button>
+                            )}
+
+                            {phase === "sealed" && (
+                                <button className="co-btn-primary" onClick={requestClose}>
+                                    Done
                                 </button>
                             )}
                         </div>
