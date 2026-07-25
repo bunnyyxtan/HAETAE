@@ -5,9 +5,9 @@
   "explorer": "https://sepolia-explorer.giwa.io",
   "deployedFrom": {
     "repo": "bunnyyxtan/HAETAE",
-    "commit": "5286c973d6998659491d10bd6e4f84f980f04df4"
+    "commit": "13b65accc190fc7f628e2ba9c9e0bf0e48dc99f8"
   },
-  "recordedAt": "2026-07-24T20:44:04Z",
+  "recordedAt": "2026-07-25T07:13:38Z",
   "pins": {
     "openzeppelin-contracts": "5fd1781b1454fd1ef8e722282f86f9293cacf256",
     "forge-std": "77041d2ce690e692d6e03cc812b57d1ddaa4d505",
@@ -17,80 +17,80 @@
   "deployer": "0x3Af656d9Ad1307543623133bDB64A39599E08E4B",
   "contracts": {
     "SandboxVerifier": {
-      "address": "0xd657fc11C4dff7955f56838055b5e87114457498",
-      "deployTx": "0x7088f94f9439900ed10387daf16ed5e9ca67a54af7193c4d4a0084c9907ec805",
-      "block": 31580590,
-      "verified": "https://sepolia-explorer.giwa.io/address/0xd657fc11C4dff7955f56838055b5e87114457498?tab=contract"
+      "address": "0x0be98AC93313172791BCF5Aaf19ef28bB9265Cba",
+      "deployTx": "0xd83786df68ee7d827f0e3dc27cae917d8539523b2f93807ec8609d3b85511450",
+      "block": 31618385,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x0be98AC93313172791BCF5Aaf19ef28bB9265Cba?tab=contract"
     },
     "TestUSDC": {
-      "address": "0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19",
-      "deployTx": "0xe84387557ef4653750168dafb900637e2e4ba79984ca2ccda39627eada0ea130",
-      "block": 31580593,
-      "verified": "https://sepolia-explorer.giwa.io/address/0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19?tab=contract"
+      "address": "0x3f9EC3DBFEca9ddc6c41A7f8924C39665EBfCE12",
+      "deployTx": "0xd885b70a38c23da619a9ed321a5c8566f3fced533c4c3c2bb790fc8dbe4af274",
+      "block": 31618388,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x3f9EC3DBFEca9ddc6c41A7f8924C39665EBfCE12?tab=contract"
     },
     "HaetaeDojang": {
-      "address": "0x1bD4b3284B73095179f00Ff566C9165B57ec9648",
-      "deployTx": "0x7308ba383b2fa026d12fae94247f854f34fe5b6a3edf7b7eeed6a2852387e635",
-      "block": 31580596,
-      "verified": "https://sepolia-explorer.giwa.io/address/0x1bD4b3284B73095179f00Ff566C9165B57ec9648?tab=contract"
+      "address": "0x93F054B9F9f957e323C66A4c4D8A03a67dA15F1B",
+      "deployTx": "0x18b5bea48c62cde883ef4feedfaa491ec181e2e335fa41f236fb3165a583024c",
+      "block": 31618390,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x93F054B9F9f957e323C66A4c4D8A03a67dA15F1B?tab=contract"
     },
     "HaetaeLicense": {
-      "address": "0x1a70E5DA8895bEc96eCa6c87E29988b380dFEe40",
-      "deployTx": "0x84407bdefda692ca522e40e4906a7d3f7fc832c4886edd29419de3392c6dd883",
-      "block": 31580599,
-      "verified": "https://sepolia-explorer.giwa.io/address/0x1a70E5DA8895bEc96eCa6c87E29988b380dFEe40?tab=contract"
+      "address": "0x7409E7Dc675f13957343340D2a6935fACA0773f8",
+      "deployTx": "0xa2860fc9f6d3b22b141650278db4c239606a256ae0581fc10de7f0a9861a9d5b",
+      "block": 31618393,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x7409E7Dc675f13957343340D2a6935fACA0773f8?tab=contract"
     },
     "HaetaePolicy": {
-      "address": "0x6f5Bb9764847d0500262D7F092E4a6999E0b6a33",
-      "deployTx": "0x72233887febe8a5c9c93826a4060778dae5b49717e2d6d98d2b35ad898f70475",
-      "block": 31580602,
-      "verified": "https://sepolia-explorer.giwa.io/address/0x6f5Bb9764847d0500262D7F092E4a6999E0b6a33?tab=contract"
+      "address": "0xF8f909C5Dc9D0e80D5E1b0332450fAF3D79D9C7d",
+      "deployTx": "0x31b4b8211ebff5c896ca575fc1ac041b5348957393311e4e2d7611d38657d063",
+      "block": 31618395,
+      "verified": "https://sepolia-explorer.giwa.io/address/0xF8f909C5Dc9D0e80D5E1b0332450fAF3D79D9C7d?tab=contract"
     },
     "HaetaeGate": {
-      "address": "0x6600dC76377089D814A6575d6c43D19D7D66dF99",
-      "deployTx": "0x5982f5bf48432072b54f39500e2efb9294b39de5feabd2cc6814ea3d92630e5c",
-      "block": 31580605,
-      "verified": "https://sepolia-explorer.giwa.io/address/0x6600dC76377089D814A6575d6c43D19D7D66dF99?tab=contract"
+      "address": "0x82345FC04BDaa853A11115C557B1c54dF9dc48EF",
+      "deployTx": "0x62f7cceeb8817751dccb20578464cb99e4ad4c3c84f352ec142173208409616f",
+      "block": 31618398,
+      "verified": "https://sepolia-explorer.giwa.io/address/0x82345FC04BDaa853A11115C557B1c54dF9dc48EF?tab=contract"
     },
     "SentinelAuthority": {
-      "address": "0x145f77a1545f3A5953477f2E4c9EC02d99327976",
-      "deployTx": "0xfc97b3c113da5047436361fdee2f5f1668bbf4f79cf46d54a6782ff2f60f86eb",
-      "block": 31580612,
-      "verified": "https://sepolia-explorer.giwa.io/address/0x145f77a1545f3A5953477f2E4c9EC02d99327976?tab=contract"
+      "address": "0xE5f518d0F2326878cd248785eA54B82B7dE2E359",
+      "deployTx": "0x42b1a295f9922620243c0b8b6fb6473163210fcbfe456800e7d19a37e0f76db3",
+      "block": 31618403,
+      "verified": "https://sepolia-explorer.giwa.io/address/0xE5f518d0F2326878cd248785eA54B82B7dE2E359?tab=contract"
     },
     "ReferenceVault": {
-      "address": "0xB57D465b97A1e9db46BB063E410E94765C9Dc564",
-      "deployTx": "0xfae33afe81a175086c6e82454fe34a1c01ac72b6b98c0b4ca8db1529a977bf1a",
-      "block": 31580621,
-      "verified": "https://sepolia-explorer.giwa.io/address/0xB57D465b97A1e9db46BB063E410E94765C9Dc564?tab=contract"
+      "address": "0xb419F747AF35490F6c8e26aA2A07B1AbEc126879",
+      "deployTx": "0x62e1ff5920eed88bb7c9f2ee731f38bbebaec8ca5a43ff5bffb619bf63de7bd0",
+      "block": 31618410,
+      "verified": "https://sepolia-explorer.giwa.io/address/0xb419F747AF35490F6c8e26aA2A07B1AbEc126879?tab=contract"
     }
   },
   "licenseVerifier": "HaetaeDojang",
   "wiring": [
     {
       "function": "setGate(address)",
-      "tx": "0x2476a28d20a658f68f4ba47bbdc7cf332d7be8e8bf617f72778dc6d8ca6fee69",
-      "block": 31580609
+      "tx": "0xb88d1a09ab74860796c2a0d23246be94674f66a200c49a75b1a84062c01ce3b6",
+      "block": 31618400
     },
     {
       "function": "grantRole(SENTINEL_ROLE,sentinelAuthority)",
-      "tx": "0xe3b562a612729327ae6a997406a88504bbbd6c145d7d740d87d6ec37dc8e4e94",
-      "block": 31580615
+      "tx": "0xcca41d8ee1ec93a700108a2851f7f6679bb875f9e755fa30f43cf319d47dd958",
+      "block": 31618405
     },
     {
       "function": "setWatcher(address,bool)",
-      "tx": "0x4669ac4fc0d9248267f28b35a3ff0bc23ac8545411f6e669fadc38c569b6b68a",
-      "block": 31580618
+      "tx": "0xfef623bef622816e9d627bb5556de2ee682a3c650899fbf314d14ca21343c935",
+      "block": 31618408
     },
     {
       "function": "setCaller(address,bool)",
-      "tx": "0xa103117224519d88d9f4a2bba61761a650950fc864eeca8acdb8ab7f9bd62d15",
-      "block": 31580624
+      "tx": "0x2865de975328b9795772faa6d09f7716248c2e4ccedfd5ed9582828222c270dc",
+      "block": 31618413
     },
     {
       "function": "mint(address,uint256)",
-      "tx": "0x912b94234dbd2511c2233e2f9bb545b8ddc0f7980e334f852391bc114bf598c0",
-      "block": 31580627
+      "tx": "0xe9d5633311576164537b41a768f4eaa129f1d71f7c61e9ae3dc4f138d4ce94d3",
+      "block": 31618415
     }
   ],
   "cast": {},
@@ -99,55 +99,55 @@
     "attacker-sink": "0x0a56e8d0f652a35ed1453e300517dfefc4195caf"
   },
   "rehearsal": {
-    "note": "The live registry starts empty by order; no fictional demo cast is seeded. The only on-chain license is one full rehearsal arc (real txs, real verdicts) played exactly once from a scratch key, scope 'rehearsal'.",
-    "agent": "0x77a0B9cde9D084F9F3DbFb77c1CC8c059aC72bDE",
+    "note": "The live registry starts empty by order; no fictional cast is seeded. The only on-chain license is one full rehearsal arc (real txs, real verdicts) played exactly once from a scratch key, scope 'rehearsal'.",
+    "agent": "0x77affC29b1D7EBA9f543d17572cd9dBF8Cd85378",
     "licenseId": 1,
     "scope": "rehearsal",
     "capPerDayUSDC": 2000,
     "venue": "dex-alpha",
     "finalStatus": "Revoked",
     "mint": {
-      "tx": "0xaea208b0c12969033446bc70b31b7ab677bf01a61426e07f434873df8798e195",
-      "block": 31580800
+      "tx": "0xaa76efc57b5740700ac960cb17c42b9e4505e4f2fcd9ca20a9cd39994d94f029",
+      "block": 31618558
     },
     "setCap": {
-      "tx": "0x9c499227f6f0721a8cdb216c9aabe31b56c993d48753c6641cb0fd977078f398",
-      "block": 31580803
+      "tx": "0xbd079838944be60419193507b2ecc1fe502338b41aa569cd371ab3e13ecbcdc2",
+      "block": 31618560
     },
     "setVenue": {
-      "tx": "0x36b20843861d38355dc1c364f0be2a4e0a858ebc4636647324de0bdff7b96fbf",
-      "block": 31580805
+      "tx": "0x4b7a9ec7b4a9c1582b18cba04e9d22fa71e05a6ea6e1f62d1d46879542b49181",
+      "block": 31618562
     },
     "beats": {
       "R1_legal_trade": {
-        "tx": "0xc77cf848e837abcd0b5ae966707fe84933231ba6de622f5ba23a5746177558ec",
-        "block": 31580808,
+        "tx": "0x1503bbc1ff6e0b86555a9e49efc4aa7ce8672eb999166c50c1dfaeea430263fb",
+        "block": 31618563,
         "venue": "dex-alpha",
         "amountUSDC": 300,
         "result": "TradeExecuted"
       },
       "R2_cap_refusal": {
-        "tx": "0xaeb00c188fc6325cfb7ad3177b17ae7fe2e66a46eeac29153fe68f9481d7f32d",
-        "block": 31580810,
+        "tx": "0xb7403ff1b13e0e4a4758d5fa6326f6384d0d62e1f121936fcfd7bcccbaa13cd6",
+        "block": 31618566,
         "venue": "dex-alpha",
         "amountUSDC": 1900,
         "result": "TradeRefused (cap 2000/day, 1700 remaining)"
       },
       "R3_venue_refusal": {
-        "tx": "0x4296fb379086c348bf2b50249012825f01e2cdda03f6aa5f7cefe6b2d78feb32",
-        "block": 31580813,
+        "tx": "0xfaf47ec155aba61c2724751c802d3be6f7f0a8a8733f54665fd2aa48c4f64de8",
+        "block": 31618568,
         "venue": "attacker-sink",
         "amountUSDC": 100,
         "result": "TradeRefused (venue not allowed; the injection beat)"
       },
       "R4_sentinel_flag": {
-        "tx": "0x823f99c05ba7940e53e26f9b8d3b326f05e52e6f015952fa8bb52ce7d2ac1b37",
-        "block": 31580815,
+        "tx": "0x68eb591733756c77d715689028a10da9822dc8cd5f69c23b03ba135147097fa5",
+        "block": 31618571,
         "result": "Flagged + license 1 Revoked"
       },
       "R5_ghost_refusal": {
-        "tx": "0x59e854c885a1a7707175ff3c2ca4735cc005732b0d0bd1fc439fa4aeb0e82de6",
-        "block": 31580818,
+        "tx": "0xe3575e7736fea5ffdb68362395d815ae350565bd5dfe0a9235d0bc82d75f09cf",
+        "block": 31618573,
         "venue": "dex-alpha",
         "amountUSDC": 50,
         "result": "TradeRefused (license Revoked)"
@@ -157,12 +157,12 @@
   "evidence": {
     "licenseById1": {
       "principal": "0xd3eB4F8a53a16D12c6F144199a7a02Bc248485db",
-      "agent": "0x77a0B9cde9D084F9F3DbFb77c1CC8c059aC72bDE",
-      "expiry": 1787517894,
+      "agent": "0x77affC29b1D7EBA9f543d17572cd9dBF8Cd85378",
+      "expiry": 1787555651,
       "scope": "rehearsal",
       "status": "Revoked (2)"
     },
-    "readCmd": "cast call 0x1a70E5DA8895bEc96eCa6c87E29988b380dFEe40 'licenseById(uint256)((address,address,uint64,bytes32,uint8))' 1 --rpc-url https://sepolia-rpc.giwa.io"
+    "readCmd": "cast call 0x7409E7Dc675f13957343340D2a6935fACA0773f8 'licenseById(uint256)((address,address,uint64,bytes32,uint8))' 1 --rpc-url https://sepolia-rpc.giwa.io"
   },
   "eas": {
     "easPredeploy": "0x4200000000000000000000000000000000000021",
@@ -176,7 +176,7 @@
     "upbitKoreaAttesterId": "keccak256('dojang.dojangattesterids.upbitkorea')",
     "principalAttestationUid": "0x085361422358f2d1cef598a3756bf968093e59353be12ea71f44b5cabdc25080",
     "principalAttestTx": "0x10f26ee16fdbf5b89bc0671aadf3b4bc70134b6695715dfdeff6b0e0df696d79",
-    "registerAttestationTx": "0x37e54ccc5d43737b00a2f405b75f32b85d9123a07f87ac2ec7599dc1e1f3bc0e",
+    "registerAttestationTx": "0xc850daa2d3da8069fbf24bb8343f17123bf05fce790894690c04516877ba00fe",
     "licenseVerifier": "HaetaeDojang"
   },
   "fundGate": {
@@ -191,6 +191,11 @@
       "stopHonored": "not required (balance covered the stated ~0.0000064 ETH measured requirement)",
       "deployerBalanceBeforeEth": "0.085187626025186410",
       "deployerBalanceAfterEth": "0.082181719248227109"
+    },
+    "namingSweepDeploy": {
+      "stopHonored": "not required (balance covered the stated ~0.0000064 ETH measured requirement)",
+      "deployerBalanceBeforeEth": "0.082181719248227109",
+      "deployerBalanceAfterEth": "0.079175853409290741"
     }
   }
 }
