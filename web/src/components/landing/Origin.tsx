@@ -18,7 +18,7 @@ export default function Origin() {
             data-testid="section-origin"
         >
             <div className="origin-head">
-                <span className="chapter-num">06 · Origin</span>
+                <span className="chapter-num">07 · Origin</span>
                 <div className="rule" />
                 <span className="meta">Joseon · palace gates</span>
             </div>

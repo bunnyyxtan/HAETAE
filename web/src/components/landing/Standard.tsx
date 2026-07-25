@@ -95,22 +95,24 @@ export default function Standard() {
                     }}
                 >
                     <a
-                        href="#top"
-                        onClick={(e) => e.preventDefault()}
+                        href="https://github.com/bunnyyxtan/HAETAE/blob/main/standard/ERC-agent-license.md"
+                        target="_blank"
+                        rel="noreferrer"
                         className="btn-ghost"
                         data-testid="standard-cta-read"
                         style={{ textDecoration: "none" }}
                     >
-                        Read the full draft
+                        Read the full draft ↗
                     </a>
                     <a
-                        href="#top"
-                        onClick={(e) => e.preventDefault()}
+                        href="https://github.com/bunnyyxtan/HAETAE/tree/main/contracts"
+                        target="_blank"
+                        rel="noreferrer"
                         className="btn-ghost"
                         data-testid="standard-cta-implement"
-                        style={{ textDecoration: "none", opacity: 0.55 }}
+                        style={{ textDecoration: "none" }}
                     >
-                        View reference impl. →
+                        View reference impl. ↗
                     </a>
                 </div>
             </motion.div>

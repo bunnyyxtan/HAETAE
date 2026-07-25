@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { navigateToConsole, getConsolePath } from "../../utils/path";
 
 export default function FinalCTA() {
     return (
@@ -32,13 +33,10 @@ export default function FinalCTA() {
                 style={{ display: "flex", flexWrap: "wrap", gap: 14 }}
             >
                 <a
-                    href="#ceremony"
+                    href={getConsolePath()}
                     onClick={(e) => {
                         e.preventDefault();
-                        const t = document.getElementById("ceremony");
-                        if (window.__lenis && t)
-                            window.__lenis.scrollTo(t, { offset: -60 });
-                        else t?.scrollIntoView({ behavior: "smooth" });
+                        navigateToConsole();
                     }}
                     className="btn-primary"
                     data-testid="cta-console"

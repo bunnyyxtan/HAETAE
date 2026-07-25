@@ -8,7 +8,8 @@ const CHAPTERS = [
     { id: "rail", n: "03" },
     { id: "ceremony", n: "04" },
     { id: "standard", n: "05" },
-    { id: "origin", n: "06" },
+    { id: "walk", n: "06" },
+    { id: "origin", n: "07" },
 ];
 
 export default function SideRail() {

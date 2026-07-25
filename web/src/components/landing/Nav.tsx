@@ -72,6 +72,7 @@ export default function Nav() {
                 <a href="#rail" onClick={goTo("rail")} data-testid="nav-rail">03 · Rail</a>
                 <a href="#ceremony" onClick={goTo("ceremony")} data-testid="nav-ceremony">04 · Ceremony</a>
                 <a href="#standard" onClick={goTo("standard")} data-testid="nav-standard">05 · Standard</a>
+                <a href="#walk" onClick={goTo("walk")} data-testid="nav-walk">06 · Walk</a>
             </div>
             <a
                 href={getConsolePath()}

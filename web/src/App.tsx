@@ -8,6 +8,7 @@ import Seal from "@/components/landing/Seal";
 import Rail from "@/components/landing/Rail";
 import Ceremony from "@/components/landing/Ceremony";
 import Standard from "@/components/landing/Standard";
+import Walk from "@/components/landing/Walk";
 import Origin from "@/components/landing/Origin";
 import Marquee from "@/components/landing/Marquee";
 import FinalCTA from "@/components/landing/FinalCTA";
@@ -141,6 +142,8 @@ function App() {
                 <Ceremony />
                 <Fold n="05" label="The Standard" />
                 <Standard />
+                <Fold n="06" label="The Walk" />
+                <Walk />
                 <Origin />
                 <Marquee />
                 <FinalCTA />

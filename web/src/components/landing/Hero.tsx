@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { navigateToConsole, getConsolePath } from "../../utils/path";
 
 export default function Hero() {
     const stageRef = useRef<HTMLDivElement | null>(null);
@@ -159,8 +160,11 @@ export default function Hero() {
                     transition={{ delay: 1.2, duration: 0.5 }}
                 >
                     <a
-                        href="#ceremony"
-                        onClick={goto("ceremony")}
+                        href={getConsolePath()}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            navigateToConsole();
+                        }}
                         className="btn-primary"
                         data-testid="hero-cta-console"
                         style={{ textDecoration: "none" }}
