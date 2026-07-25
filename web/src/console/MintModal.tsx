@@ -6,6 +6,12 @@ import { isFixtureMode } from "../chain/mode";
 import { sendMint, waitMint, walletErrorMessage } from "../chain/wallet";
 import { TxUnconfirmedError, walletSlowTimer } from "../chain/txWatch";
 import { explorerTx } from "../chain/deployment";
+import {
+    fetchPrincipalVerification,
+    requestTestnetVerification,
+    DeskError,
+    type DeskResult,
+} from "../chain/verifyDesk";
 import { useModal } from "./useModal";
 
 // What the ceremony hands back to its parent. Fixture mode: the parent builds
@@ -32,6 +38,10 @@ interface MintModalProps {
 
 type Phase = "form" | "review" | "wallet" | "pending" | "sealed" | "failed";
 
+// Verification desk states (pre-flight gate, live mode only). "sealed" is
+// persistent per the ceremony law — the operator clicks Continue to proceed.
+type VerifState = "checking" | "needed" | "desk" | "sealed" | "deskFailed" | "passed";
+
 const TERMS = [
     { label: "30 days", days: 30 },
     { label: "90 days", days: 90 },
@@ -50,6 +60,13 @@ export default function MintModal({
     relicense = null,
 }: MintModalProps) {
     const [phase, setPhase] = useState<Phase>("form");
+    // Pre-flight verification gate: never let an unverified principal fire a
+    // doomed mint. Fixture mode has its own sandbox verifier — gate passes.
+    const [verif, setVerif] = useState<VerifState>(isFixtureMode ? "passed" : "checking");
+    const verifRef = useRef(verif);
+    verifRef.current = verif;
+    const [deskResult, setDeskResult] = useState<DeskResult | null>(null);
+    const [deskErr, setDeskErr] = useState<string | null>(null);
     const phaseRef = useRef(phase);
     phaseRef.current = phase;
     if (import.meta.env.DEV) {
@@ -85,6 +102,52 @@ export default function MintModal({
         };
     }, []);
 
+    // Pre-flight check on open (live mode): read the Dojang before the form.
+    useEffect(() => {
+        if (isFixtureMode) return;
+        if (!connectedAddress) {
+            setVerif("needed");
+            return;
+        }
+        let cancelled = false;
+        void fetchPrincipalVerification(connectedAddress)
+            .then((v) => {
+                if (!cancelled) setVerif(v.verified ? "passed" : "needed");
+            })
+            .catch(() => {
+                // Fail open to the gate, not the form: an unreadable verifier
+                // must not invite a doomed transaction.
+                if (!cancelled) setVerif("needed");
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [connectedAddress]);
+
+    const getVerified = () => {
+        if (!connectedAddress || verifRef.current === "desk") return;
+        setDeskErr(null);
+        setVerif("desk");
+        void (async () => {
+            try {
+                const r = await requestTestnetVerification(connectedAddress);
+                if (!mountedRef.current) return;
+                setDeskResult(r);
+                // Persistent seal (ceremony law): no auto-advance. If the desk
+                // says alreadyVerified, the seal still shows — chain truth.
+                setVerif("sealed");
+            } catch (err) {
+                if (!mountedRef.current) return;
+                setDeskErr(
+                    err instanceof DeskError
+                        ? err.message
+                        : "Verification failed. Nothing is hidden — retry or check the explorer.",
+                );
+                setVerif("deskFailed");
+            }
+        })();
+    };
+
     const handleRequestClose = () => {
         // A transaction in flight owns the modal (same law as the revoke
         // ceremony): closing mid-signature or mid-confirmation would orphan
@@ -93,6 +156,9 @@ export default function MintModal({
         // registry refetch shows chain truth.
         if ((phaseRef.current === "wallet" || phaseRef.current === "pending") && slowRef.current === null)
             return;
+        // Desk ceremony in flight: the attestation is being sealed server-side;
+        // the verdict must land in the UI, not in a closed dialog.
+        if (verifRef.current === "desk") return;
         if (timerRef.current) clearTimeout(timerRef.current);
         onClose();
     };
@@ -208,7 +274,7 @@ export default function MintModal({
         })();
     };
 
-    const txLocked = (phase === "wallet" || phase === "pending") && slow === null;
+    const txLocked = ((phase === "wallet" || phase === "pending") && slow === null) || verif === "desk";
     const expiryLabel = (unix: number) => `${new Date(unix * 1000).toISOString().slice(0, 10)} · ${unix}`;
 
     const statusLine =
@@ -259,7 +325,95 @@ export default function MintModal({
                 </div>
 
                 <div className="co-modal-body">
-                    {phase === "form" && (
+                    {verif !== "passed" && (
+                        <div className="co-form-grid" data-testid="verify-gate">
+                            {verif === "checking" && (
+                                <div className="co-field-hint" role="status">
+                                    Checking verification on the Dojang…
+                                </div>
+                            )}
+
+                            {(verif === "needed" || verif === "desk" || verif === "deskFailed") && (
+                                <>
+                                    <div className="co-field-hint">
+                                        Licensing requires a verified principal. On mainnet,
+                                        principals verify through Upbit Dojang KYC — here on
+                                        testnet, a HAETAE attestation stands in for it.
+                                    </div>
+                                    <button
+                                        className="co-btn-primary"
+                                        onClick={getVerified}
+                                        disabled={verif === "desk" || !connectedAddress}
+                                        data-testid="verify-gate-cta"
+                                    >
+                                        {verif === "desk" ? "Verifying…" : "Get Verified"}
+                                    </button>
+                                    {!connectedAddress && (
+                                        <span className="co-field-err">Connect a wallet first.</span>
+                                    )}
+                                </>
+                            )}
+
+                            {(verif === "desk" || verif === "deskFailed" || verif === "sealed") && (
+                                <div
+                                    className={`co-tx-strip ${verif === "deskFailed" ? "is-failed" : ""} ${verif === "sealed" ? "is-ok" : ""}`}
+                                    role="status"
+                                >
+                                    <span>
+                                        {verif === "desk"
+                                            ? "The desk is attesting your address and registering it on the Dojang — two transactions on GIWA…"
+                                            : verif === "deskFailed"
+                                              ? deskErr
+                                              : deskResult?.alreadyVerified
+                                                ? "Already verified on the Dojang — no new transactions."
+                                                : "VERIFIED — attestation sealed and registered on the Dojang."}
+                                    </span>
+                                    {verif === "sealed" && deskResult && (
+                                        <span
+                                            style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
+                                        >
+                                            <span className="font-mono" data-testid="verify-gate-uid">
+                                                uid {deskResult.uid.slice(0, 10)}…{deskResult.uid.slice(-6)}
+                                            </span>
+                                            {deskResult.attestTx && (
+                                                <a className="co-tx-link font-mono" href={explorerTx(deskResult.attestTx)} target="_blank" rel="noreferrer">
+                                                    attest ↗
+                                                </a>
+                                            )}
+                                            {deskResult.registerTx && (
+                                                <a className="co-tx-link font-mono" href={explorerTx(deskResult.registerTx)} target="_blank" rel="noreferrer">
+                                                    register ↗
+                                                </a>
+                                            )}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {verif === "deskFailed" && (
+                                <span className="co-field-hint">
+                                    Rate limits: one attempt per address per 10 minutes.
+                                </span>
+                            )}
+
+                            {verif === "sealed" && (
+                                <button
+                                    className="co-btn-primary"
+                                    onClick={() => setVerif("passed")}
+                                    data-testid="verify-gate-continue"
+                                >
+                                    Continue to licensing
+                                </button>
+                            )}
+
+                            <span className="co-field-hint">
+                                Testnet verification stands in for Upbit Dojang KYC. On
+                                mainnet, principals verify through Upbit.
+                            </span>
+                        </div>
+                    )}
+
+                    {verif === "passed" && phase === "form" && (
                         <div className="co-form-grid">
                             {relicense && (
                                 <div className="co-field-hint">
@@ -323,7 +477,7 @@ export default function MintModal({
                         </div>
                     )}
 
-                    {phase !== "form" && (
+                    {verif === "passed" && phase !== "form" && (
                         <div className="co-form-grid">
                             <div className="co-agent-fields" style={{ margin: 0 }}>
                                 <div className="co-papers-field">

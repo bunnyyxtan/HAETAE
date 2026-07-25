@@ -8,8 +8,8 @@ const STEPS = [
     {
         n: "1",
         title: "Verify",
-        line: "Prove you're human once — a Dojang attestation binds your wallet. The console asks only if you aren't verified yet.",
-        where: "happens before your first mint",
+        line: "Prove you're human once — click Get Verified and the testnet desk seals an attestation to your wallet. Stands in for Upbit Dojang KYC.",
+        where: "the console asks before your first mint",
     },
     {
         n: "2",

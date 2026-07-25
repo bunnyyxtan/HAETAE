@@ -4,7 +4,11 @@ import { getAddress, isAddress } from "viem";
 import "../console.css";
 import { isFixtureMode } from "../chain/mode";
 import { fetchVerifyReport } from "../chain/reads";
-import { explorerAddr } from "../chain/deployment";
+import { explorerAddr, addresses } from "../chain/deployment";
+import {
+    fetchPrincipalVerification,
+    type PrincipalVerification,
+} from "../chain/verifyDesk";
 import { agentFixtures, flags, formatAddress, ledgerFixtures } from "./fixtures";
 import { kindColor } from "./PapersModal";
 import { useCopy } from "./useCopy";
@@ -210,6 +214,26 @@ export default function VerifyPage() {
         };
     }, [agent, reloadKey]);
 
+    // Trust chain: the principal's verification status (which lane, which
+    // attestation) — visible, not implied. Fetched separately so a slow
+    // Dojang read never blocks the license verdict.
+    const [principalVerif, setPrincipalVerif] = useState<PrincipalVerification | null>(null);
+    useEffect(() => {
+        setPrincipalVerif(null);
+        if (isFixtureMode || !view?.principal) return;
+        let cancelled = false;
+        void fetchPrincipalVerification(view.principal)
+            .then((v) => {
+                if (!cancelled) setPrincipalVerif(v);
+            })
+            .catch(() => {
+                /* line simply stays absent — never a fake verdict */
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [view?.principal]);
+
     const checkAnother = () => {
         const v = checkInput.trim();
         if (!isAddress(v)) {
@@ -294,6 +318,53 @@ export default function VerifyPage() {
                                         <div className="co-papers-label">Scope</div>
                                         <div className="co-papers-value mono">{view.scope ?? "—"}</div>
                                     </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {view.verdict !== "invalid" && view.verdict !== "unlicensed" && view.principal && (
+                            <section className="co-verify-section" data-testid="verify-trust-chain">
+                                <div className="co-papers-label">Principal verification</div>
+                                <div className="co-verify-grid">
+                                    <div className="co-papers-field">
+                                        <div className="co-papers-label">Status</div>
+                                        <div className="co-papers-value mono">
+                                            {isFixtureMode
+                                                ? "VERIFIED · sandbox verifier"
+                                                : principalVerif === null
+                                                  ? "—"
+                                                  : principalVerif.verified
+                                                    ? "VERIFIED"
+                                                    : "NOT VERIFIED"}
+                                        </div>
+                                    </div>
+                                    <div className="co-papers-field">
+                                        <div className="co-papers-label">Lane</div>
+                                        <div className="co-papers-value mono">
+                                            {isFixtureMode
+                                                ? "sandbox"
+                                                : principalVerif?.lane === "haetae"
+                                                  ? "HAETAE attestation (testnet stand-in for Upbit Dojang)"
+                                                  : principalVerif?.lane === "dojang"
+                                                    ? "Upbit Dojang"
+                                                    : "—"}
+                                        </div>
+                                    </div>
+                                    {!isFixtureMode && principalVerif?.uid && (
+                                        <div className="co-papers-field" style={{ gridColumn: "1 / -1" }}>
+                                            <div className="co-papers-label">Attestation uid</div>
+                                            <div className="co-papers-value mono" data-testid="verify-attestation-uid">
+                                                <a
+                                                    className="co-tx-link"
+                                                    href={explorerAddr(addresses.dojang)}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    {principalVerif.uid.slice(0, 18)}…{principalVerif.uid.slice(-8)} ↗
+                                                </a>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </section>
                         )}

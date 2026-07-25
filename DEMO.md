@@ -6,8 +6,9 @@ https://ai-enforcement-protocol.replit.app/console, or run locally
 sitting in `contracts/`, one Blockscout tab
 (https://sepolia-explorer.giwa.io). A wallet is optional — this walk never
 signs anything from the browser. (Self-serve licensing from the browser IS
-live for anyone who does connect a wallet; the staged walk just doesn't
-depend on it.)
+live for anyone who does connect a wallet — including verification: the
+console's **Get Verified** button seals a testnet attestation in one click,
+standing in for Upbit Dojang KYC. The staged walk just doesn't depend on it.)
 
 **The contingency rule — decide in five seconds, not on stage:** if the
 top-bar ticker reads `#—` for more than ~10 seconds, or Registry shows the

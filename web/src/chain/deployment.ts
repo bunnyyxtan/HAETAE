@@ -14,6 +14,7 @@ export const addresses = {
     sentinel: getAddress(c.SentinelAuthority.address),
     vault: getAddress(c.ReferenceVault.address),
     usdc: getAddress(c.TestUSDC.address),
+    dojang: getAddress(c.HaetaeDojang.address),
 } as const;
 
 // License deploy block: the earliest block any event we render can exist in.
