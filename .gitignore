@@ -62,7 +62,3 @@ contracts/lcov.info
 # Replit workspace plumbing — untracked at HEAD (S07 sweep): platform chat
 # session upload staging is disk-only; not part of the reviewed repo.
 attached_assets/
-
-# TEMP gate-walk (never commit)
-web/.gatewalk-keys.json
-web/gatewalk-signer.mjs
