@@ -19,7 +19,13 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
     const [agents, setAgents] = useState<AgentLicense[]>([]);
     const [error, setError] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
-    const [mineOnly, setMineOnly] = useState(false);
+    // Scoping default (console-only, nothing hidden from /verify or deleted):
+    // wallet connected → "My agents"; disconnected → full public registry.
+    const [mineOnly, setMineOnly] = useState(!!connectedAddress);
+
+    useEffect(() => {
+        setMineOnly(!!connectedAddress);
+    }, [connectedAddress]);
     // Monotone token: overlapping silent refetches (rapid successive writes)
     // can resolve out of order — only the newest snapshot may land.
     const refetchSeqRef = useRef(0);
@@ -231,13 +237,23 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
                         License an Agent
                     </button>
                     {connectedAddress && (
-                        <button
-                            className={`co-chip ${mineOnly ? "is-on" : ""}`}
-                            aria-pressed={mineOnly}
-                            onClick={() => setMineOnly((v) => !v)}
-                        >
-                            My agents
-                        </button>
+                        <>
+                            <button
+                                className={`co-chip ${mineOnly ? "is-on" : ""}`}
+                                aria-pressed={mineOnly}
+                                onClick={() => setMineOnly(true)}
+                            >
+                                My agents
+                            </button>
+                            <button
+                                className={`co-chip ${!mineOnly ? "is-on" : ""}`}
+                                aria-pressed={!mineOnly}
+                                onClick={() => setMineOnly(false)}
+                                title="The public record — every license on the protocol"
+                            >
+                                Full registry
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
@@ -302,8 +318,8 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
                             <tr>
                                 <td colSpan={8}>
                                     <div className="co-empty">
-                                        <div className="co-empty-msg">No agents under this principal.</div>
-                                        <p className="co-page-desc" style={{ margin: "0 auto" }}>The connected wallet answers for no licenses here yet.</p>
+                                        <div className="co-empty-msg">No licenses under this principal — mint one.</div>
+                                        <p className="co-page-desc" style={{ margin: "0 auto" }}>The connected wallet answers for no licenses here yet. The full registry remains on the public record.</p>
                                         <button className="co-action-btn co-retry-btn" onClick={() => openMint(null)}>
                                             License an Agent
                                         </button>

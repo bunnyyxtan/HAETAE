@@ -334,6 +334,7 @@ html:has(.co-app) {
     display: flex;
     gap: 12px;
     justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 .co-action-btn {
@@ -429,6 +430,11 @@ html:has(.co-app) {
 .co-modal-body {
     padding: 32px;
     overflow-y: auto;
+    /* short viewports / browser zoom: the body is the ONLY scroll region —
+       header and footer stay pinned, no control may sit outside it */
+    min-height: 0;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .co-modal-footer {
@@ -744,6 +750,14 @@ a.co-agent-addr:hover { color: var(--ink); border-bottom-color: var(--stone); }
     justify-content: space-between;
     align-items: center;
     gap: 12px;
+    /* action row must live inside the card at every width: metadata and
+       buttons wrap instead of escaping the border (fix container, not symptom) */
+    flex-wrap: wrap;
+    min-width: 0;
+}
+.co-agent-foot .co-actions {
+    /* when the row wraps, actions take their own full line, right-aligned */
+    flex: 1 1 auto;
 }
 .co-agent-activity {
     font-family: "JetBrains Mono", monospace;
