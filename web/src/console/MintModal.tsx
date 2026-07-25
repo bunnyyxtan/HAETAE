@@ -181,8 +181,12 @@ export default function MintModal({
                 setTxHash(hash);
                 setSlow(null);
                 setPhaseSync("pending");
-                const { ok, licenseId } = await waitMint(hash, () => {
-                    if (mountedRef.current && phaseRef.current === "pending") setSlow("confirm");
+                const { ok, licenseId } = await waitMint(hash, {
+                    onStillWaiting: () => {
+                        if (mountedRef.current && phaseRef.current === "pending") setSlow("confirm");
+                    },
+                    // Closed/unmounted ceremony must not keep polling receipts.
+                    shouldStop: () => !mountedRef.current,
                 });
                 if (!mountedRef.current) return;
                 if (ok) {
@@ -363,7 +367,9 @@ export default function MintModal({
                                 </>
                             )}
 
-                            {(txLocked || phase === "sealed" || phase === "failed") && (
+                            {/* Gate on phase, not txLocked: the strip must stay visible
+                                during honest slow states, when close is unlocked. */}
+                            {(phase === "wallet" || phase === "pending" || phase === "sealed" || phase === "failed") && (
                                 <div
                                     className={`co-tx-strip ${phase === "failed" ? "is-failed" : ""} ${phase === "sealed" ? "is-ok" : ""}`}
                                     role="status"

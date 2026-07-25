@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Hex } from "viem";
 import {
     TxUnconfirmedError,
+    WatchAbortedError,
     walletSlowTimer,
     watchTx,
     type ReceiptClient,
@@ -81,6 +82,30 @@ describe("gate-walk step 2 reproduction (tx lands after the 30s attempt window)"
         await expect(
             watchTx(client, HASH, { attemptMs: 30_000, maxMs: 90_000, now: () => clock.now }),
         ).rejects.toBeInstanceOf(TxUnconfirmedError);
+    });
+
+    it("shouldStop halts background polling (closed modals must not keep watching for 5min)", async () => {
+        const clock = { now: 0 };
+        let attempts = 0;
+        const client: ReceiptClient = {
+            async waitForTransactionReceipt({ timeout = 30_000 }) {
+                attempts += 1;
+                clock.now += timeout;
+                throw new Error("Timed out while waiting for transaction receipt");
+            },
+        };
+        let stopped = false;
+        const watch = watchTx(client, HASH, {
+            attemptMs: 30_000,
+            maxMs: 300_000,
+            now: () => clock.now,
+            shouldStop: () => stopped,
+            onStillWaiting: () => {
+                stopped = true; // owner "unmounts" after the first slow report
+            },
+        });
+        await expect(watch).rejects.toBeInstanceOf(WatchAbortedError);
+        expect(attempts).toBe(1);
     });
 
     it("non-timeout errors still propagate (a real failure is a real failure)", async () => {

@@ -60,8 +60,14 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
     const [busy, setBusy] = useState<Busy>(null);
     const busyRef = useRef<Busy>(null);
     // Task #20: true once the UI has entered an honest "cannot determine tx
-    // state" message — close is allowed from that point.
+    // state" message — close is allowed from that point (state drives the
+    // render unlock; the ref serves the synchronous close guard).
     const slowRef = useRef(false);
+    const [slow, setSlowState] = useState(false);
+    const setSlow = (v: boolean) => {
+        slowRef.current = v;
+        setSlowState(v);
+    };
     const setBusySync = (b: Busy) => {
         busyRef.current = b;
         setBusy(b);
@@ -113,13 +119,13 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
     ) => {
         if (busyRef.current) return;
         setBusySync(b);
-        slowRef.current = false;
+        setSlow(false);
         setTx({ stage: "wallet", msg: "Awaiting signature…", txHash: null });
         // Task #20: wallet deadline — after 15s without a wallet response the
         // label says so honestly and close unlocks.
         const deadline = walletSlowTimer(() => {
             if (!mountedRef.current || busyRef.current === null) return;
-            slowRef.current = true;
+            setSlow(true);
             setTx({
                 stage: "wallet",
                 msg: "No wallet response yet — approve or reject the request in your wallet. You may close this dialog.",
@@ -132,16 +138,19 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
             deadline.clear();
             sentHash = hash;
             if (!mountedRef.current) return;
-            slowRef.current = false;
+            setSlow(false);
             setTx({ stage: "pending", msg: "Sealing — awaiting confirmation…", txHash: hash });
-            const ok = await waitTx(hash, () => {
-                if (!mountedRef.current) return;
-                slowRef.current = true;
-                setTx({
-                    stage: "pending",
-                    msg: "Submitted — still confirming on GIWA. Follow it via the tx link.",
-                    txHash: hash,
-                });
+            const ok = await waitTx(hash, {
+                onStillWaiting: () => {
+                    if (!mountedRef.current) return;
+                    setSlow(true);
+                    setTx({
+                        stage: "pending",
+                        msg: "Submitted — still confirming on GIWA. Follow it via the tx link.",
+                        txHash: hash,
+                    });
+                },
+                shouldStop: () => !mountedRef.current,
             });
             if (!mountedRef.current) return;
             if (ok) {
@@ -159,7 +168,7 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
             const keepHash = err instanceof TxUnconfirmedError ? sentHash : null;
             setTx({ stage: "failed", msg: walletErrorMessage(err), txHash: keepHash });
         } finally {
-            slowRef.current = false;
+            if (mountedRef.current) setSlow(false);
             if (mountedRef.current) setBusySync(null);
         }
     };
@@ -275,7 +284,7 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
         );
     };
 
-    const locked = busy !== null;
+    const locked = busy !== null && !slow;
     const busyVenueKey = busy?.kind === "venue" ? busy.key : null;
 
     return (

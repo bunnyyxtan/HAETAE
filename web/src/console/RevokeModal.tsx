@@ -142,8 +142,11 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
             setSlow(null);
             setPhaseSync("pending");
             startPendingMeter();
-            const ok = await waitRevoke(hash, () => {
-                if (mountedRef.current && phaseRef.current === "pending") setSlow("confirm");
+            const ok = await waitRevoke(hash, {
+                onStillWaiting: () => {
+                    if (mountedRef.current && phaseRef.current === "pending") setSlow("confirm");
+                },
+                shouldStop: () => !mountedRef.current,
             });
             stopPendingMeter();
             if (!mountedRef.current) return;
@@ -432,7 +435,7 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
                         </div>
                     </div>
 
-                    {txHash && (pending || ghosted) && (
+                    {txHash && (pending || ghosted || failed) && (
                         <a
                             className="co-tx-link font-mono"
                             href={explorerTx(txHash)}
@@ -444,7 +447,7 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
                         </a>
                     )}
 
-                    <div style={{ marginTop: txHash && (pending || ghosted) ? 12 : 24, height: 24, textAlign: "center", color: ghosted ? "var(--vermillion)" : failed ? "var(--vermillion)" : "var(--stone)", fontFamily: "JetBrains Mono, monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                    <div style={{ marginTop: txHash && (pending || ghosted || failed) ? 12 : 24, height: 24, textAlign: "center", color: ghosted ? "var(--vermillion)" : failed ? "var(--vermillion)" : "var(--stone)", fontFamily: "JetBrains Mono, monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em" }}>
                         {statusLine}
                     </div>
                 </div>

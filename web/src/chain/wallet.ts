@@ -202,8 +202,14 @@ export async function sendSetVenue(agentAddr: string, venueAddr: string, allowed
 // going (onStillWaiting lets the UI say "submitted — confirming…" honestly)
 // and only a real receipt or the exhausted budget (TxUnconfirmedError — an
 // explicit UNKNOWN, carrying the hash for the explorer link) ends the wait.
-export async function waitTx(hash: Hex, onStillWaiting?: (elapsedMs: number) => void): Promise<boolean> {
-    const { status } = await watchTx(publicClient, hash, { onStillWaiting });
+export interface WaitOpts {
+    onStillWaiting?: (elapsedMs: number) => void;
+    /** Stop watching (e.g. modal unmounted) — throws WatchAbortedError. */
+    shouldStop?: () => boolean;
+}
+
+export async function waitTx(hash: Hex, opts: WaitOpts = {}): Promise<boolean> {
+    const { status } = await watchTx(publicClient, hash, opts);
     return status === "success";
 }
 
@@ -214,9 +220,9 @@ export const waitRevoke = waitTx;
 // carries the freshly minted licenseId (the ceremony's sealed screen shows it).
 export async function waitMint(
     hash: Hex,
-    onStillWaiting?: (elapsedMs: number) => void,
+    opts: WaitOpts = {},
 ): Promise<{ ok: boolean; licenseId: number | null }> {
-    const { status, logs: rawLogs } = await watchTx(publicClient, hash, { onStillWaiting });
+    const { status, logs: rawLogs } = await watchTx(publicClient, hash, opts);
     if (status !== "success") return { ok: false, licenseId: null };
     const logs = parseEventLogs({
         abi: [licensedEvent],

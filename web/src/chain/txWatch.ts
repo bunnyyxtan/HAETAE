@@ -21,6 +21,15 @@ import type { Hex } from "viem";
 // failure for a tx that may still land.
 // ---------------------------------------------------------------------------
 
+/** Thrown when the watcher is stopped by its owner (e.g. modal unmounted).
+ *  Callers' mountedRef guards swallow it — it must never surface as a verdict. */
+export class WatchAbortedError extends Error {
+    constructor() {
+        super("Tx watch aborted by its owner.");
+        this.name = "WatchAbortedError";
+    }
+}
+
 /** Thrown when a submitted tx is still unconfirmed after maxMs of watching. */
 export class TxUnconfirmedError extends Error {
     readonly hash: Hex;
@@ -57,6 +66,12 @@ export interface WatchTxOptions {
      * to switch to the honest "submitted — still confirming" state.
      */
     onStillWaiting?: (elapsedMs: number) => void;
+    /**
+     * Polled between attempts; return true to stop watching (throws
+     * WatchAbortedError). Prevents closed/unmounted ceremonies from keeping
+     * background receipt polls alive for the full budget.
+     */
+    shouldStop?: () => boolean;
     /** Injectable clock for tests. */
     now?: () => number;
 }
@@ -77,9 +92,10 @@ export async function watchTx(
     hash: Hex,
     opts: WatchTxOptions = {},
 ): Promise<WatchTxResult> {
-    const { attemptMs = 30_000, maxMs = 300_000, onStillWaiting, now = Date.now } = opts;
+    const { attemptMs = 30_000, maxMs = 300_000, onStillWaiting, shouldStop, now = Date.now } = opts;
     const start = now();
     for (;;) {
+        if (shouldStop?.()) throw new WatchAbortedError();
         try {
             const receipt = await client.waitForTransactionReceipt({ hash, timeout: attemptMs });
             return {
