@@ -8,7 +8,10 @@ contracts live on GIWA Sepolia as its reference implementation.
 
 ## See it in three minutes
 
-- **Console:** run it yourself with the three commands below, then open
+- **Live:** [ai-enforcement-protocol.replit.app/console](https://ai-enforcement-protocol.replit.app/console)
+  — the deployed console against GIWA Sepolia. Connect a wallet and license
+  an agent yourself; `/verify/<agent>` answers wallet-free.
+- **Console, locally:** run it with the three commands below, then open
   `/console`. The stage walk is scripted beat-by-beat in [DEMO.md](DEMO.md).
 - **No RPC? No problem:** append `?sandbox&delay=0` to the console URL —
   the entire walk works offline from fixtures.
@@ -112,8 +115,11 @@ Replit environment plumbing, not product code (LOG S01, Addendum 3).
 ## Status
 
 Phase 0 (bootstrap + landing) and Phase 1 (License Registry spine) are closed —
-release tags now follow the post-reboot `v0.x.y-slug` scheme (`v0.1.0-contracts` onward), CI green. Phase 2 is live: the full spine
-and demo stack deployed and Blockscout-verified on GIWA Sepolia, with the
-console live-wired across all four tabs (S04–S05, ratified). In flight: the
-submission package (S06). Next: Phase 3, ERC-4337 validation-layer
-enforcement — the flagship.
+release tags follow the post-reboot `v0.x.y-slug` scheme (`v0.1.0-contracts`
+onward), CI green. Phase 2 is live: the full spine and demo stack deployed and
+Blockscout-verified on GIWA Sepolia, the console live-wired across all four
+tabs, and the self-serve gate sealed at `v0.4.0-selfserve` — verify, license,
+policy, enforce, revoke, all proven end-to-end through the published UI with
+on-chain evidence in the process log. In flight: the GASOK submission package.
+Next: SDK, indexer, Sentinel service, reference agent — then Phase 3,
+ERC-4337 validation-layer enforcement, the flagship.

@@ -1,9 +1,13 @@
 # DEMO — the three-minute walk
 
-Stage kit: the console (run locally: `cd web && npm install && npm run dev`,
-then open `/console`), one terminal sitting in `contracts/`, one Blockscout tab
+Stage kit: the console — live at
+https://ai-enforcement-protocol.replit.app/console, or run locally
+(`cd web && npm install && npm run dev`, then open `/console`) — one terminal
+sitting in `contracts/`, one Blockscout tab
 (https://sepolia-explorer.giwa.io). A wallet is optional — this walk never
-signs anything from the browser.
+signs anything from the browser. (Self-serve licensing from the browser IS
+live for anyone who does connect a wallet; the staged walk just doesn't
+depend on it.)
 
 **The contingency rule — decide in five seconds, not on stage:** if the
 top-bar ticker reads `#—` for more than ~10 seconds, or Registry shows the
