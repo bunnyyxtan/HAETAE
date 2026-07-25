@@ -132,7 +132,7 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
 
     const fixtureApply = (patch: { capPerDay?: number; venues?: string[] }, next: PolicyDetail) => {
         setDetail(next);
-        setTx({ stage: "ok", msg: "Policy updated (fixture — no chain traffic).", txHash: null });
+        setTx({ stage: "ok", msg: "Policy updated (sandbox — no chain traffic).", txHash: null });
         onPolicyChanged(agent.address, patch);
     };
 
@@ -372,7 +372,7 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
 
                             <div className="co-field">
                                 <label className="co-field-label" htmlFor="policy-venue">
-                                    {isFixtureMode ? "Add venue (fixture)" : "Custom venue address"}
+                                    {isFixtureMode ? "Add venue (sandbox)" : "Custom venue address"}
                                 </label>
                                 <div className="co-preset-row">
                                     <input
@@ -490,7 +490,7 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
 
                 <div className="co-modal-footer">
                     {isFixtureMode
-                        ? "FIXTURE MODE · NO CHAIN TRAFFIC"
+                        ? "SANDBOX MODE · NO CHAIN TRAFFIC"
                         : "POLICY WRITES REQUIRE THE AGENT'S PRINCIPAL · DEAD-ON-READ AFTER RE-MINT BY ANOTHER"}
                 </div>
             </motion.div>

@@ -5,12 +5,12 @@ import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {HaetaeLicense} from "../src/HaetaeLicense.sol";
 import {SentinelAuthority} from "../src/sentinel/SentinelAuthority.sol";
-import {DemoVault} from "../src/examples/DemoVault.sol";
+import {ReferenceVault} from "../src/examples/ReferenceVault.sol";
 import {IAgentLicense} from "../src/interfaces/IAgentLicense.sol";
 import {IHaetaePolicy} from "../src/interfaces/IHaetaePolicy.sol";
 
 /// @notice Plays the full demo beat arc against a FRESH rehearsal agent (Session 06,
-///         standing ruling: live demos re-run beats through DemoVault via the seed
+///         standing ruling: live demos re-run beats through ReferenceVault via the seed
 ///         script path — fresh agent, fresh day budget — the seeded cast HT-0001..0005
 ///         is the museum exhibit and is never touched). One run = one licensed agent
 ///         walked through the whole story:
@@ -82,7 +82,7 @@ contract Rehearsal is Script {
     HaetaeLicense internal license;
     IHaetaePolicy internal policy;
     SentinelAuthority internal sentinelAuth;
-    DemoVault internal vault;
+    ReferenceVault internal vault;
     address internal usdc;
 
     // --- The rehearsal cast --------------------------------------------------------
@@ -115,7 +115,7 @@ contract Rehearsal is Script {
         license = HaetaeLicense(vm.envAddress("LICENSE_ADDR"));
         policy = IHaetaePolicy(vm.envAddress("POLICY_ADDR"));
         sentinelAuth = SentinelAuthority(vm.envAddress("SENTINEL_AUTH_ADDR"));
-        vault = DemoVault(vm.envAddress("VAULT_ADDR"));
+        vault = ReferenceVault(vm.envAddress("VAULT_ADDR"));
         usdc = vm.envAddress("USDC_ADDR");
 
         principal = vm.addr(principalPk);

@@ -7,7 +7,7 @@ signs anything from the browser.
 
 **The contingency rule — decide in five seconds, not on stage:** if the
 top-bar ticker reads `#—` for more than ~10 seconds, or Registry shows the
-error card, append `?demo=fixtures&delay=0` to the URL and run the exact same
+error card, append `?sandbox&delay=0` to the URL and run the exact same
 walk offline. Fixture-mode differences are marked ⬦ below.
 
 ## Before the lights (T-10 min)
@@ -15,7 +15,7 @@ walk offline. Fixture-mode differences are marked ⬦ below.
 1. Open `/console` — ticker pulsing. The live registry carries no fictional
    cast: expect the `rehearsal` row (Revoked) from the recorded arc, plus any
    agents licensed since. The scripted eight-row theater lives exclusively
-   behind `?demo=fixtures` and is labeled as fixtures.
+   behind `?sandbox` and is labeled as fixtures.
 2. If playing the live beats (the 2:00 section): paste the live-beats block
    (bottom of this file) into the terminal — derive the fresh key, do **not**
    run yet.
@@ -109,6 +109,6 @@ the agent ends Revoked.
 
 1. **RPC slow** — the walk still works; skip the live beats, narrate the
    recorded rehearsal beats from the README table.
-2. **RPC dead** — `?demo=fixtures&delay=0`: the full walk, offline, zero chain.
+2. **RPC dead** — `?sandbox&delay=0`: the full walk, offline, zero chain.
 3. **Laptop dead** — the README beat table *is* the demo: five Blockscout
    links, same story, any browser.

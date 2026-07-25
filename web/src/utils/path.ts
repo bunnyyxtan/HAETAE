@@ -68,7 +68,7 @@ export function navigateToConsole() {
     // the handler still reads the pre-navigation scrollY. The synthetic
     // marker distinguishes a fresh in-app navigation (lands at top) from a
     // real Back/Forward traversal (restores the route's saved position).
-    // Preserve the query string across SPA navigation: ?demo=fixtures must
+    // Preserve the query string across SPA navigation: ?sandbox (or the legacy ?demo=fixtures alias) must
     // survive the landing -> console transition (S04 fixture fallback flag).
     window.history.pushState(null, "", getConsolePath() + window.location.search);
     window.dispatchEvent(new PopStateEvent("popstate", { state: { synthetic: true } }));

@@ -5,13 +5,13 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IHaetaeGate} from "../interfaces/IHaetaeGate.sol";
 
-/// @title DemoVault — the theater stage: one gated action, every outcome on the record
+/// @title ReferenceVault — the theater stage: one gated action, every outcome on the record
 /// @notice Deliberately thin. The vault shows the rail working — it is not a product:
 ///         no owner, no withdraw, no strategy. It holds test USDC, and execute() either
 ///         moves funds to a venue past the gate or emits the refusal verdict. Defense
 ///         chain: unknown venues die at VenueNotAllowed, unknown tokens at CapExceeded
 ///         (no cap configured = zero allowance), so the vault itself needs no allowlists.
-contract DemoVault {
+contract ReferenceVault {
     using SafeERC20 for IERC20;
 
     /// @notice The checkpoint every execute() passes or dies at.

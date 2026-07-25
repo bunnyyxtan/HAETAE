@@ -5,7 +5,7 @@ import type { AgentRow, LedgerRow } from "../chain/types";
 // never signs anything).
 export type AgentLicense = AgentRow;
 
-// Staged-load delay is URL-tunable in fixture mode (?demo=fixtures&delay=0)
+// Staged-load delay is URL-tunable in fixture mode (?sandbox&delay=0)
 // so demo rehearsals and screenshot evidence can skip the skeleton theater.
 // Absent or invalid → the default 900ms stays. Other flags remain edit-here
 // rehearsal knobs by design.

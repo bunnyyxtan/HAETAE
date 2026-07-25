@@ -131,6 +131,6 @@ view-purity; no state change from any read.
 
 ## Out of scope (P3-B/C)
 
-Implementation, mock EAS/scroll fixtures, DemoFlow.t.sol update,
-Deploy.s.sol wiring (IS_DEMO flag; ATTESTER_PK key mint), schema
+Implementation, mock EAS/scroll fixtures, FullLoop.t.sol update,
+Deploy.s.sol wiring (IS_SANDBOX flag; ATTESTER_PK key mint), schema
 registration transaction, console lane labeling, integrator guide.

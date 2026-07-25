@@ -5,7 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {HaetaeLicense} from "../src/HaetaeLicense.sol";
 import {SentinelAuthority} from "../src/sentinel/SentinelAuthority.sol";
-import {DemoVault} from "../src/examples/DemoVault.sol";
+import {ReferenceVault} from "../src/examples/ReferenceVault.sol";
 import {IAgentLicense} from "../src/interfaces/IAgentLicense.sol";
 import {IHaetaePolicy} from "../src/interfaces/IHaetaePolicy.sol";
 
@@ -70,7 +70,7 @@ contract Seed is Script {
     HaetaeLicense internal license;
     IHaetaePolicy internal policy;
     SentinelAuthority internal sentinelAuth;
-    DemoVault internal vault;
+    ReferenceVault internal vault;
     address internal usdc;
 
     // --- The cast. Mint order is law: yield-scout must land on licenseId 3. -------
@@ -108,7 +108,7 @@ contract Seed is Script {
         license = HaetaeLicense(vm.envAddress("LICENSE_ADDR"));
         policy = IHaetaePolicy(vm.envAddress("POLICY_ADDR"));
         sentinelAuth = SentinelAuthority(vm.envAddress("SENTINEL_AUTH_ADDR"));
-        vault = DemoVault(vm.envAddress("VAULT_ADDR"));
+        vault = ReferenceVault(vm.envAddress("VAULT_ADDR"));
         usdc = vm.envAddress("USDC_ADDR");
 
         principal = vm.addr(principalPk);

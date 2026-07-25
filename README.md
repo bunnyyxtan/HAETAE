@@ -10,7 +10,7 @@ contracts live on GIWA Sepolia as its reference implementation.
 
 - **Console:** run it yourself with the three commands below, then open
   `/console`. The stage walk is scripted beat-by-beat in [DEMO.md](DEMO.md).
-- **No RPC? No problem:** append `?demo=fixtures&delay=0` to the console URL —
+- **No RPC? No problem:** append `?sandbox&delay=0` to the console URL —
   the entire walk works offline from fixtures.
 
 ```sh
@@ -32,13 +32,13 @@ commit
 | [`HaetaePolicy`](https://sepolia-explorer.giwa.io/address/0x6f5Bb9764847d0500262D7F092E4a6999E0b6a33?tab=contract) | `0x6f5Bb9764847d0500262D7F092E4a6999E0b6a33` |
 | [`HaetaeGate`](https://sepolia-explorer.giwa.io/address/0x6600dC76377089D814A6575d6c43D19D7D66dF99?tab=contract) | `0x6600dC76377089D814A6575d6c43D19D7D66dF99` |
 | [`SentinelAuthority`](https://sepolia-explorer.giwa.io/address/0x145f77a1545f3A5953477f2E4c9EC02d99327976?tab=contract) | `0x145f77a1545f3A5953477f2E4c9EC02d99327976` |
-| [`DemoVault`](https://sepolia-explorer.giwa.io/address/0xB57D465b97A1e9db46BB063E410E94765C9Dc564?tab=contract) | `0xB57D465b97A1e9db46BB063E410E94765C9Dc564` |
-| [`MockUSDC`](https://sepolia-explorer.giwa.io/address/0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19?tab=contract) | `0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19` |
+| [`ReferenceVault`](https://sepolia-explorer.giwa.io/address/0xB57D465b97A1e9db46BB063E410E94765C9Dc564?tab=contract) | `0xB57D465b97A1e9db46BB063E410E94765C9Dc564` |
+| [`TestUSDC`](https://sepolia-explorer.giwa.io/address/0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19?tab=contract) | `0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19` |
 | [`HaetaeDojang`](https://sepolia-explorer.giwa.io/address/0x1bD4b3284B73095179f00Ff566C9165B57ec9648?tab=contract) | `0x1bD4b3284B73095179f00Ff566C9165B57ec9648` |
-| [`DemoVerifier`](https://sepolia-explorer.giwa.io/address/0xd657fc11C4dff7955f56838055b5e87114457498?tab=contract) | `0xd657fc11C4dff7955f56838055b5e87114457498` |
+| [`SandboxVerifier`](https://sepolia-explorer.giwa.io/address/0xd657fc11C4dff7955f56838055b5e87114457498?tab=contract) | `0xd657fc11C4dff7955f56838055b5e87114457498` |
 
 The live registry starts empty by design — no fictional demo cast is seeded.
-Scripted fixtures live exclusively behind the console's `?demo=fixtures` mode
+Scripted fixtures live exclusively behind the console's `?sandbox` mode
 and are labeled as such.
 
 ## The five beats — one real rehearsal, already on-chain
@@ -70,7 +70,7 @@ cast call 0x1a70E5DA8895bEc96eCa6c87E29988b380dFEe40 \
   --rpc-url https://sepolia-rpc.giwa.io
 ```
 
-**Demo-grade verifier — not production trust.** The deployed `DemoVerifier`
+**Demo-grade verifier — not production trust.** The deployed `SandboxVerifier`
 is permissionless: anyone can attest any address, so a license minted
 through it proves flow, not identity. It stands in for GIWA's Verified
 Address rail solely so the Phase 2 demo runs end-to-end on today's testnet.

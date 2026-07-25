@@ -160,7 +160,7 @@ export async function sendRevoke(agentAddr: string): Promise<Hex> {
 }
 
 // mint(agent, expiry, scope): permissionless behind the verifier gate — the
-// deployed DemoVerifier passes every address (Dojang stand-in; the UI says so).
+// deployed SandboxVerifier passes every address (Dojang stand-in; the UI says so).
 export async function sendMint(agentAddr: string, expiryUnix: number, scopeHex: Hex): Promise<Hex> {
     const agent = getAddress(agentAddr);
     const call = {

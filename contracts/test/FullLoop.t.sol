@@ -6,7 +6,7 @@ import {HaetaeLicense} from "../src/HaetaeLicense.sol";
 import {HaetaePolicy} from "../src/HaetaePolicy.sol";
 import {HaetaeGate} from "../src/HaetaeGate.sol";
 import {SentinelAuthority} from "../src/sentinel/SentinelAuthority.sol";
-import {DemoVault} from "../src/examples/DemoVault.sol";
+import {ReferenceVault} from "../src/examples/ReferenceVault.sol";
 import {IAgentLicense} from "../src/interfaces/IAgentLicense.sol";
 import {IHaetaePolicy} from "../src/interfaces/IHaetaePolicy.sol";
 import {IHaetaeGate} from "../src/interfaces/IHaetaeGate.sol";
@@ -36,13 +36,13 @@ contract RevertingGate {
     }
 }
 
-contract DemoFlowTest is Test {
+contract FullLoopTest is Test {
     HaetaeLicense lic;
     MockVerifier ver;
     HaetaePolicy pol;
     HaetaeGate gate;
     SentinelAuthority auth;
-    DemoVault vault;
+    ReferenceVault vault;
     MiniUSDC usdc;
     address ADMIN = makeAddr("admin");
     address PRINCIPAL = makeAddr("principal");
@@ -61,7 +61,7 @@ contract DemoFlowTest is Test {
         pol = new HaetaePolicy(lic, ADMIN);
         gate = new HaetaeGate(lic, pol, ADMIN);
         auth = new SentinelAuthority(lic, ADMIN);
-        vault = new DemoVault(gate);
+        vault = new ReferenceVault(gate);
         usdc = new MiniUSDC();
         bytes32 role = lic.SENTINEL_ROLE(); // evaluate before prank (S02 rule)
         vm.startPrank(ADMIN);
@@ -85,13 +85,13 @@ contract DemoFlowTest is Test {
     // --- vault units ----------------------------------------------------------
 
     function test_Revert_Constructor_ZeroGate() public {
-        vm.expectRevert(DemoVault.ZeroAddress.selector);
-        new DemoVault(IHaetaeGate(address(0)));
+        vm.expectRevert(ReferenceVault.ZeroAddress.selector);
+        new ReferenceVault(IHaetaeGate(address(0)));
     }
 
     function test_Execute_Happy_MovesFundsAndRecords() public {
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeExecuted(AGENT, VENUE_A, address(usdc), 600e6);
+        emit ReferenceVault.TradeExecuted(AGENT, VENUE_A, address(usdc), 600e6);
         vm.prank(AGENT);
         vault.execute(VENUE_A, address(usdc), 600e6);
         assertEq(usdc.balanceOf(address(vault)), 9400e6);
@@ -102,23 +102,23 @@ contract DemoFlowTest is Test {
     function test_Execute_RefusedVerdicts_SelectorsSurfaced_NoStateChange() public {
         // NotLicensed: AGENT2 holds no license.
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT2, VENUE_A, address(usdc), 100e6, IHaetaeGate.NotLicensed.selector);
+        emit ReferenceVault.TradeRefused(AGENT2, VENUE_A, address(usdc), 100e6, IHaetaeGate.NotLicensed.selector);
         vm.prank(AGENT2);
         vault.execute(VENUE_A, address(usdc), 100e6);
         // VenueNotAllowed: venue B was never allowed.
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT, VENUE_B, address(usdc), 100e6, IHaetaeGate.VenueNotAllowed.selector);
+        emit ReferenceVault.TradeRefused(AGENT, VENUE_B, address(usdc), 100e6, IHaetaeGate.VenueNotAllowed.selector);
         vm.prank(AGENT);
         vault.execute(VENUE_B, address(usdc), 100e6);
         // CapExceeded: over the 1000e6 daily cap.
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT, VENUE_A, address(usdc), 1100e6, IHaetaeGate.CapExceeded.selector);
+        emit ReferenceVault.TradeRefused(AGENT, VENUE_A, address(usdc), 1100e6, IHaetaeGate.CapExceeded.selector);
         vm.prank(AGENT);
         vault.execute(VENUE_A, address(usdc), 1100e6);
         // LicenseExpired: warp to the boundary.
         vm.warp(EXPIRY);
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT, VENUE_A, address(usdc), 100e6, IHaetaeGate.LicenseExpired.selector);
+        emit ReferenceVault.TradeRefused(AGENT, VENUE_A, address(usdc), 100e6, IHaetaeGate.LicenseExpired.selector);
         vm.prank(AGENT);
         vault.execute(VENUE_A, address(usdc), 100e6);
         // Refusals moved nothing and recorded nothing.
@@ -139,9 +139,9 @@ contract DemoFlowTest is Test {
     }
 
     function test_Execute_EmptyRevertData_ZeroSelector() public {
-        DemoVault v2 = new DemoVault(IHaetaeGate(address(new RevertingGate())));
+        ReferenceVault v2 = new ReferenceVault(IHaetaeGate(address(new RevertingGate())));
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT, VENUE_A, address(usdc), 1, bytes4(0));
+        emit ReferenceVault.TradeRefused(AGENT, VENUE_A, address(usdc), 1, bytes4(0));
         vm.prank(AGENT);
         v2.execute(VENUE_A, address(usdc), 1);
     }
@@ -176,21 +176,21 @@ contract DemoFlowTest is Test {
         vm.expectEmit(true, true, true, true);
         emit IHaetaeGate.CheckPassed(AGENT2, VENUE_A, address(usdc), 600e6, address(vault));
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeExecuted(AGENT2, VENUE_A, address(usdc), 600e6);
+        emit ReferenceVault.TradeExecuted(AGENT2, VENUE_A, address(usdc), 600e6);
         vm.prank(AGENT2);
         vault.execute(VENUE_A, address(usdc), 600e6);
         assertEq(usdc.balanceOf(VENUE_A), 600e6);
 
         // Beat 4: over-cap refused — 600 + 600 breaches the 1000 cap.
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT2, VENUE_A, address(usdc), 600e6, IHaetaeGate.CapExceeded.selector);
+        emit ReferenceVault.TradeRefused(AGENT2, VENUE_A, address(usdc), 600e6, IHaetaeGate.CapExceeded.selector);
         vm.prank(AGENT2);
         vault.execute(VENUE_A, address(usdc), 600e6);
         assertEq(pol.spentToday(AGENT2, address(usdc)), 600e6);
 
         // Beat 5: wrong venue refused.
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT2, VENUE_B, address(usdc), 100e6, IHaetaeGate.VenueNotAllowed.selector);
+        emit ReferenceVault.TradeRefused(AGENT2, VENUE_B, address(usdc), 100e6, IHaetaeGate.VenueNotAllowed.selector);
         vm.prank(AGENT2);
         vault.execute(VENUE_B, address(usdc), 100e6);
 
@@ -205,14 +205,14 @@ contract DemoFlowTest is Test {
 
         // Beat 7: the SAME intent that passed in beat 3 is now refused NotLicensed.
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT2, VENUE_A, address(usdc), 600e6, IHaetaeGate.NotLicensed.selector);
+        emit ReferenceVault.TradeRefused(AGENT2, VENUE_A, address(usdc), 600e6, IHaetaeGate.NotLicensed.selector);
         vm.prank(AGENT2);
         vault.execute(VENUE_A, address(usdc), 600e6);
 
         // Beat 8: ghost stays ghost — even after the day cap would have reset.
         vm.warp(t0 + 2 days);
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT2, VENUE_A, address(usdc), 600e6, IHaetaeGate.NotLicensed.selector);
+        emit ReferenceVault.TradeRefused(AGENT2, VENUE_A, address(usdc), 600e6, IHaetaeGate.NotLicensed.selector);
         vm.prank(AGENT2);
         vault.execute(VENUE_A, address(usdc), 600e6);
         assertEq(pol.remainingToday(AGENT2, address(usdc)), 0);
@@ -229,7 +229,7 @@ contract DemoFlowTest is Test {
         lic.mint(AGENT, EXPIRY, 0);
         // No inheritance: old principal's venue allowance is dead for the new license.
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeRefused(AGENT, VENUE_A, address(usdc), 100e6, IHaetaeGate.VenueNotAllowed.selector);
+        emit ReferenceVault.TradeRefused(AGENT, VENUE_A, address(usdc), 100e6, IHaetaeGate.VenueNotAllowed.selector);
         vm.prank(AGENT);
         vault.execute(VENUE_A, address(usdc), 100e6);
         // The new principal writes its own terms; the rail opens under the new regime.
@@ -238,7 +238,7 @@ contract DemoFlowTest is Test {
         pol.setVenue(AGENT, VENUE_A, true);
         vm.stopPrank();
         vm.expectEmit(true, true, true, true);
-        emit DemoVault.TradeExecuted(AGENT, VENUE_A, address(usdc), 100e6);
+        emit ReferenceVault.TradeExecuted(AGENT, VENUE_A, address(usdc), 100e6);
         vm.prank(AGENT);
         vault.execute(VENUE_A, address(usdc), 100e6);
         assertEq(usdc.balanceOf(VENUE_A), 100e6);

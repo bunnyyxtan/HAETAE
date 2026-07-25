@@ -412,7 +412,7 @@ export default function VerifyPage() {
 
                 <footer className="co-verify-foot font-mono">
                     {isFixtureMode
-                        ? "FIXTURE MODE · NO CHAIN TRAFFIC"
+                        ? "SANDBOX MODE · NO CHAIN TRAFFIC"
                         : "READ-ONLY · NO WALLET REQUIRED · VERDICTS STRAIGHT FROM GIWA SEPOLIA"}
                 </footer>
             </div>

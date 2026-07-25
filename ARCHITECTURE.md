@@ -28,14 +28,14 @@
 | `aa/HaetaeValidator.sol` | ERC-4337 validation-phase enforcement module: license + policy check inside `validateUserOp` path (ERC-7579-style module) |
 | `aa/HaetaePaymaster.sol` | Sponsors gas ONLY for licensed, policy-clean UserOps; staked with EntryPoint |
 | `sentinel/SentinelAuthority.sol` | Role management + rate-limited delegated revocation with on-chain reason codes |
-| `examples/DemoVault.sol` | Gated demo action; the prompt-injection theater target |
+| `examples/ReferenceVault.sol` | Gated demo action; the prompt-injection theater target |
 
 ## 3. Flows (canonical)
 
 ```
 MINT   principal (Dojang Verified Address) ▶ HaetaeLicense.mint(agent, expiry, scope)
 
-ACT/CONTRACT   agent ▶ DemoVault.execute ▶ haetaeGuarded ▶ License.isValid + Policy.check
+ACT/CONTRACT   agent ▶ ReferenceVault.execute ▶ haetaeGuarded ▶ License.isValid + Policy.check
                fail ▶ revert NotLicensed() | PolicyViolation(reason)
 
 ACT/4337   agent UserOp ▶ rundler ▶ EntryPoint ▶ HaetaeValidator.validateUserOp
@@ -63,10 +63,10 @@ haetae/
 │   │   ├── integrations/DojangVerifiedAddress.sol
 │   │   ├── aa/{HaetaeValidator.sol, HaetaePaymaster.sol}
 │   │   ├── sentinel/SentinelAuthority.sol
-│   │   └── examples/DemoVault.sol
+│   │   └── examples/ReferenceVault.sol
 │   ├── script/{Deploy.s.sol, DeployAA.s.sol}
 │   └── test/{License.t.sol, Policy.t.sol, Gate.t.sol, Validator.t.sol,
-│            Paymaster.t.sol, Sentinel.t.sol, DemoFlow.t.sol, fork/Dojang.fork.t.sol}
+│            Paymaster.t.sol, Sentinel.t.sol, FullLoop.t.sol, fork/Dojang.fork.t.sol}
 ├── standard/ERC-agent-license.md        # draft spec; IAgentLicense is its interface
 ├── sdk/                                 # @haetae/sdk
 │   └── src/{index.ts, license.ts, policy.ts, watch.ts, errors.ts} + test/

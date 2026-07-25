@@ -16,13 +16,13 @@
   },
   "deployer": "0x3Af656d9Ad1307543623133bDB64A39599E08E4B",
   "contracts": {
-    "DemoVerifier": {
+    "SandboxVerifier": {
       "address": "0xd657fc11C4dff7955f56838055b5e87114457498",
       "deployTx": "0x7088f94f9439900ed10387daf16ed5e9ca67a54af7193c4d4a0084c9907ec805",
       "block": 31580590,
       "verified": "https://sepolia-explorer.giwa.io/address/0xd657fc11C4dff7955f56838055b5e87114457498?tab=contract"
     },
-    "MockUSDC": {
+    "TestUSDC": {
       "address": "0xEF35A848a3dF83Eed3d5DC93BA291FF99e5EEe19",
       "deployTx": "0xe84387557ef4653750168dafb900637e2e4ba79984ca2ccda39627eada0ea130",
       "block": 31580593,
@@ -58,7 +58,7 @@
       "block": 31580612,
       "verified": "https://sepolia-explorer.giwa.io/address/0x145f77a1545f3A5953477f2E4c9EC02d99327976?tab=contract"
     },
-    "DemoVault": {
+    "ReferenceVault": {
       "address": "0xB57D465b97A1e9db46BB063E410E94765C9Dc564",
       "deployTx": "0xfae33afe81a175086c6e82454fe34a1c01ac72b6b98c0b4ca8db1529a977bf1a",
       "block": 31580621,

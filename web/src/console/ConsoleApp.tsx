@@ -14,7 +14,7 @@ import { disconnectWallet, initWallet, subscribeAccount } from "../chain/wallet"
 const VIEWS = ["registry", "agents", "standard", "ledger"];
 
 // Each view is hash-deep-linkable (/console#ledger). replaceState keeps
-// ?demo=fixtures intact and avoids filling history with every tab hop.
+// ?sandbox (or legacy ?demo=fixtures) intact and avoids filling history with every tab hop.
 const initialView = () => {
     const h = window.location.hash.replace("#", "");
     return VIEWS.includes(h) ? h : "registry";

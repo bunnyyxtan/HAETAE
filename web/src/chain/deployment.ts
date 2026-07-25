@@ -12,8 +12,8 @@ export const addresses = {
     policy: getAddress(c.HaetaePolicy.address),
     gate: getAddress(c.HaetaeGate.address),
     sentinel: getAddress(c.SentinelAuthority.address),
-    vault: getAddress(c.DemoVault.address),
-    usdc: getAddress(c.MockUSDC.address),
+    vault: getAddress(c.ReferenceVault.address),
+    usdc: getAddress(c.TestUSDC.address),
 } as const;
 
 // License deploy block: the earliest block any event we render can exist in.

@@ -9,14 +9,14 @@ import {HaetaeDojang, IDojangScrollLike} from "../src/adapters/HaetaeDojang.sol"
 import {HaetaePolicy} from "../src/HaetaePolicy.sol";
 import {HaetaeGate} from "../src/HaetaeGate.sol";
 import {SentinelAuthority} from "../src/sentinel/SentinelAuthority.sol";
-import {DemoVault} from "../src/examples/DemoVault.sol";
-import {DemoVerifier} from "../src/examples/DemoVerifier.sol";
-import {MockUSDC} from "../src/examples/MockUSDC.sol";
+import {ReferenceVault} from "../src/examples/ReferenceVault.sol";
+import {SandboxVerifier} from "../src/examples/SandboxVerifier.sol";
+import {TestUSDC} from "../src/examples/TestUSDC.sol";
 
 /// @notice Deploys the full HAETAE spine on GIWA Sepolia (chain 91342) in wiring order:
-///         DemoVerifier → MockUSDC → HaetaeLicense → HaetaePolicy → HaetaeGate →
+///         SandboxVerifier → TestUSDC → HaetaeLicense → HaetaePolicy → HaetaeGate →
 ///         policy.setGate(gate) → SentinelAuthority + SENTINEL_ROLE grant + watcher →
-///         DemoVault → gate caller-allowlist → stage funding (1M tUSDC to the vault).
+///         ReferenceVault → gate caller-allowlist → stage funding (1M tUSDC to the vault).
 ///
 ///         On-chain authorization: the Session 04 written order (recorded in LOG S04) —
 ///         GIWA Sepolia testnet ONLY; no other chain exists for this project.
@@ -33,7 +33,7 @@ contract Deploy is Script {
     /// @notice The only chain this project deploys to.
     uint256 internal constant GIWA_SEPOLIA = 91342;
 
-    /// @notice tUSDC minted to the DemoVault so the stage has funds to move.
+    /// @notice tUSDC minted to the ReferenceVault so the stage has funds to move.
     uint256 internal constant STAGE_FUNDING = 1_000_000e6;
 
     /// @notice EAS predeploy on GIWA Sepolia (OP-stack canonical slot).
@@ -51,27 +51,27 @@ contract Deploy is Script {
         uint256 deployerPk = vm.envUint("DEPLOYER_PK");
         address deployer = vm.addr(deployerPk);
         address watcher = vm.envAddress("SENTINEL_ADDR");
-        // IS_DEMO=true keeps the always-true DemoVerifier on the license gate
+        // IS_SANDBOX=true keeps the always-true SandboxVerifier on the license gate
         // (demo window only); default is the real dual-lane adapter.
-        bool isDemo = vm.envOr("IS_DEMO", false);
+        bool isSandbox = vm.envOr("IS_SANDBOX", false);
         // HAETAE lane bindings: schema UID registered in the step-3 ceremony,
         // attester is the fresh dedicated key (never the deployer — key law).
         // envOr so a demo-mode run cannot fail on missing lane-2 env; zero
         // values simply leave the adapter's HAETAE lane disabled.
         bytes32 haetaeSchemaUid = vm.envOr("HAETAE_SCHEMA_UID", bytes32(0));
         address haetaeAttester = vm.envOr("HAETAE_ATTESTER_ADDR", address(0));
-        if (!isDemo && (haetaeSchemaUid == bytes32(0) || haetaeAttester == address(0))) {
+        if (!isSandbox && (haetaeSchemaUid == bytes32(0) || haetaeAttester == address(0))) {
             revert("live deploy requires HAETAE_SCHEMA_UID and HAETAE_ATTESTER_ADDR");
         }
 
         vm.startBroadcast(deployerPk);
 
-        DemoVerifier verifier = new DemoVerifier();
-        MockUSDC usdc = new MockUSDC();
+        SandboxVerifier verifier = new SandboxVerifier();
+        TestUSDC usdc = new TestUSDC();
         HaetaeDojang dojang = new HaetaeDojang(
             IDojangScrollLike(DOJANG_SCROLL), UPBIT_KOREA, EAS_PREDEPLOY, haetaeSchemaUid, haetaeAttester
         );
-        IVerifiedAddress licenseVerifier = isDemo ? IVerifiedAddress(verifier) : IVerifiedAddress(dojang);
+        IVerifiedAddress licenseVerifier = isSandbox ? IVerifiedAddress(verifier) : IVerifiedAddress(dojang);
         HaetaeLicense license = new HaetaeLicense(deployer, licenseVerifier);
         HaetaePolicy policy = new HaetaePolicy(license, deployer);
         HaetaeGate gate = new HaetaeGate(license, policy, deployer);
@@ -79,22 +79,22 @@ contract Deploy is Script {
         SentinelAuthority sentinel = new SentinelAuthority(license, deployer);
         license.grantRole(license.SENTINEL_ROLE(), address(sentinel));
         sentinel.setWatcher(watcher, true);
-        DemoVault vault = new DemoVault(gate);
+        ReferenceVault vault = new ReferenceVault(gate);
         gate.setCaller(address(vault), true);
         usdc.mint(address(vault), STAGE_FUNDING);
 
         vm.stopBroadcast();
 
         // Public record only — addresses, never keys.
-        console2.log("DemoVerifier     ", address(verifier));
+        console2.log("SandboxVerifier     ", address(verifier));
         console2.log("HaetaeDojang     ", address(dojang));
         console2.log("license verifier ", address(licenseVerifier));
-        console2.log("MockUSDC         ", address(usdc));
+        console2.log("TestUSDC         ", address(usdc));
         console2.log("HaetaeLicense    ", address(license));
         console2.log("HaetaePolicy     ", address(policy));
         console2.log("HaetaeGate       ", address(gate));
         console2.log("SentinelAuthority", address(sentinel));
-        console2.log("DemoVault        ", address(vault));
+        console2.log("ReferenceVault        ", address(vault));
         console2.log("watcher (wired)  ", watcher);
     }
 }

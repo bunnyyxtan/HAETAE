@@ -73,8 +73,8 @@ const CONTRACTS: { name: string; role: string; addr: string }[] = [
     { name: "HaetaePolicy", role: "caps + venue allowlists", addr: addresses.policy },
     { name: "HaetaeGate", role: "pre-trade enforcement", addr: addresses.gate },
     { name: "SentinelAuthority", role: "watchdog verdicts", addr: addresses.sentinel },
-    { name: "DemoVault", role: "reference integration", addr: addresses.vault },
-    { name: "MockUSDC", role: "tUSDC test token (6 decimals)", addr: addresses.usdc },
+    { name: "ReferenceVault", role: "reference integration", addr: addresses.vault },
+    { name: "TestUSDC", role: "tUSDC test token (6 decimals)", addr: addresses.usdc },
 ];
 
 const SOLIDITY_SNIPPET = `import {IAgentLicense} from "haetae/interfaces/IAgentLicense.sol";

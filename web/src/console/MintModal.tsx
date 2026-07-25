@@ -188,11 +188,11 @@ export default function MintModal({
             ? "Awaiting signature…"
             : phase === "pending"
               ? isFixtureMode
-                  ? "Sealing (fixture theater)…"
+                  ? "Sealing (sandbox theater)…"
                   : "Sealing — awaiting confirmation…"
               : phase === "sealed"
                 ? isFixtureMode
-                    ? "License sealed. No chain traffic in fixture mode."
+                    ? "License sealed. No chain traffic in sandbox mode."
                     : mintedId !== null
                       ? `HT-${String(mintedId).padStart(4, "0")} sealed on GIWA.`
                       : "License sealed on GIWA."
@@ -363,8 +363,8 @@ export default function MintModal({
 
                 <div className="co-modal-footer">
                     {isFixtureMode
-                        ? "FIXTURE MODE · NO CHAIN TRAFFIC"
-                        : "TESTNET: MINT GATE IS A DEMOVERIFIER STAND-IN — EVERY PRINCIPAL PASSES. PRODUCTION WIRES DOJANG."}
+                        ? "SANDBOX MODE · NO CHAIN TRAFFIC"
+                        : "TESTNET: PRINCIPALS VERIFY VIA HAETAE DOJANG — DOJANG SCROLL OR A HAETAE ATTESTATION."}
                 </div>
             </motion.div>
         </div>
