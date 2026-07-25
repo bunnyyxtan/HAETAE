@@ -5,6 +5,7 @@ import { AgentLicense } from "./fixtures";
 import { isFixtureMode } from "../chain/mode";
 import { explorerTx } from "../chain/deployment";
 import { sendRevoke, waitRevoke, walletErrorMessage } from "../chain/wallet";
+import { TxUnconfirmedError, walletSlowTimer } from "../chain/txWatch";
 import { useSettings } from "@/utils/settings";
 
 const HOLD_MS = 900;
@@ -38,6 +39,10 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
     const [blockMs, setBlockMs] = useState(0);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [failMsg, setFailMsg] = useState<string | null>(null);
+    // Task #20 honest slow states (see MintModal).
+    const [slow, setSlow] = useState<null | "wallet" | "confirm">(null);
+    const slowRef = useRef<null | "wallet" | "confirm">(null);
+    slowRef.current = slow;
     const holdRef = useRef<{ raf: number | null; start: number }>({ raf: null, start: 0 });
     const pendingRef = useRef<{ raf: number | null; start: number }>({ raf: null, start: 0 });
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -66,7 +71,10 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
     const handleRequestClose = () => {
         // A transaction in flight owns the modal: closing mid-signature or
         // mid-confirmation would orphan the ceremony from its verdict.
-        if (phaseRef.current === "wallet" || phaseRef.current === "pending") return;
+        // Exception (Task #20): once the UI has honestly said it cannot
+        // determine tx state, the user may leave.
+        if ((phaseRef.current === "wallet" || phaseRef.current === "pending") && !slowRef.current)
+            return;
         clearTimers();
         onClose();
     };
@@ -120,15 +128,26 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
     const runLiveRevoke = async () => {
         setPhaseSync("wallet");
         setFailMsg(null);
+        setSlow(null);
+        // Task #20: wallet deadline — 15s without a wallet response switches
+        // the label to the honest state and unlocks close.
+        const deadline = walletSlowTimer(() => {
+            if (mountedRef.current && phaseRef.current === "wallet") setSlow("wallet");
+        });
         try {
             const hash = await sendRevoke(agent.address);
+            deadline.clear();
             if (!mountedRef.current) return;
             setTxHash(hash);
+            setSlow(null);
             setPhaseSync("pending");
             startPendingMeter();
-            const ok = await waitRevoke(hash);
+            const ok = await waitRevoke(hash, () => {
+                if (mountedRef.current && phaseRef.current === "pending") setSlow("confirm");
+            });
             stopPendingMeter();
             if (!mountedRef.current) return;
+            setSlow(null);
             if (ok) {
                 setBlockMs(Math.round(performance.now() - pendingRef.current.start));
                 finishGhost();
@@ -136,7 +155,11 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
                 fail("Transaction reverted on-chain.");
             }
         } catch (err) {
+            deadline.clear();
             stopPendingMeter();
+            if (mountedRef.current) setSlow(null);
+            // An unconfirmed tx keeps its link — unknown is not "reverted".
+            if (!(err instanceof TxUnconfirmedError)) setTxHash(null);
             fail(walletErrorMessage(err));
         }
     };
@@ -259,7 +282,7 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
     const awaitingWallet = phase === "wallet";
     const pending = phase === "pending";
     const failed = phase === "failed";
-    const txLocked = awaitingWallet || pending;
+    const txLocked = (awaitingWallet || pending) && slow === null;
 
     const ariaLabel = ghosted
         ? "License revoked"
@@ -288,9 +311,13 @@ export default function RevokeModal({ agent, opener, onClose, onRevoked }: Revok
     const statusLine = ghosted
         ? "License Revoked"
         : awaitingWallet
-            ? "Awaiting wallet signature…"
+            ? slow === "wallet"
+                ? "No wallet response yet — approve or reject in your wallet. You may close this dialog."
+                : "Awaiting wallet signature…"
             : pending
-                ? "Confirming on GIWA…"
+                ? slow === "confirm"
+                    ? "Submitted — still confirming on GIWA. Follow it via the tx link."
+                    : "Confirming on GIWA…"
                 : failed
                     ? failMsg ?? "Failed."
                     : holding

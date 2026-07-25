@@ -4,6 +4,7 @@ import { getAddress, isAddress, stringToHex, type Hex } from "viem";
 import { AgentLicense, FIXTURE_WALLET, formatAddress } from "./fixtures";
 import { isFixtureMode } from "../chain/mode";
 import { sendMint, waitMint, walletErrorMessage } from "../chain/wallet";
+import { TxUnconfirmedError, walletSlowTimer } from "../chain/txWatch";
 import { explorerTx } from "../chain/deployment";
 import { useModal } from "./useModal";
 
@@ -65,6 +66,12 @@ export default function MintModal({
     const [txHash, setTxHash] = useState<string | null>(null);
     const [mintedId, setMintedId] = useState<number | null>(null);
     const [failMsg, setFailMsg] = useState<string | null>(null);
+    // Task #20: honest slow states. "wallet" = no wallet response within the
+    // deadline; "confirm" = submitted but no receipt within the poll window.
+    // Either unlocks close — the user is never trapped behind a stale label.
+    const [slow, setSlow] = useState<null | "wallet" | "confirm">(null);
+    const slowRef = useRef(slow);
+    slowRef.current = slow;
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const mountedRef = useRef(true);
@@ -81,8 +88,11 @@ export default function MintModal({
     const handleRequestClose = () => {
         // A transaction in flight owns the modal (same law as the revoke
         // ceremony): closing mid-signature or mid-confirmation would orphan
-        // the ceremony from its verdict.
-        if (phaseRef.current === "wallet" || phaseRef.current === "pending") return;
+        // the ceremony from its verdict. Exception (Task #20): once the UI has
+        // honestly said it cannot determine tx state, the user may leave — the
+        // registry refetch shows chain truth.
+        if ((phaseRef.current === "wallet" || phaseRef.current === "pending") && slowRef.current === null)
+            return;
         if (timerRef.current) clearTimeout(timerRef.current);
         onClose();
     };
@@ -152,18 +162,28 @@ export default function MintModal({
         void (async () => {
             setPhaseSync("wallet");
             setFailMsg(null);
+            setSlow(null);
             // A retry must not wear the previous attempt's tx link.
             setTxHash(null);
             setMintedId(null);
+            // Wallet deadline: if the wallet has not answered in 15s, say so
+            // and unlock close instead of hanging on "Awaiting signature…".
+            const deadline = walletSlowTimer(() => {
+                if (mountedRef.current && phaseRef.current === "wallet") setSlow("wallet");
+            });
             try {
                 const scopeHex: Hex = scopeText
                     ? stringToHex(scopeText, { size: 32 })
                     : (`0x${"00".repeat(32)}` as Hex);
                 const hash = await sendMint(agent, reviewExpiry, scopeHex);
+                deadline.clear();
                 if (!mountedRef.current) return;
                 setTxHash(hash);
+                setSlow(null);
                 setPhaseSync("pending");
-                const { ok, licenseId } = await waitMint(hash);
+                const { ok, licenseId } = await waitMint(hash, () => {
+                    if (mountedRef.current && phaseRef.current === "pending") setSlow("confirm");
+                });
                 if (!mountedRef.current) return;
                 if (ok) {
                     setMintedId(licenseId);
@@ -173,23 +193,33 @@ export default function MintModal({
                     setFailMsg("Transaction reverted on-chain.");
                 }
             } catch (err) {
+                deadline.clear();
                 if (!mountedRef.current) return;
                 setPhaseSync("failed");
+                // An unconfirmed tx is NOT a failure verdict: keep the tx link
+                // so the user can watch it land (or not) on the explorer.
+                if (!(err instanceof TxUnconfirmedError)) setTxHash(null);
                 setFailMsg(walletErrorMessage(err));
+            } finally {
+                if (mountedRef.current) setSlow(null);
             }
         })();
     };
 
-    const txLocked = phase === "wallet" || phase === "pending";
+    const txLocked = (phase === "wallet" || phase === "pending") && slow === null;
     const expiryLabel = (unix: number) => `${new Date(unix * 1000).toISOString().slice(0, 10)} · ${unix}`;
 
     const statusLine =
         phase === "wallet"
-            ? "Awaiting signature…"
+            ? slow === "wallet"
+                ? "No wallet response yet — approve or reject the request in your wallet. Nothing is submitted without your signature; you may close this dialog."
+                : "Awaiting signature…"
             : phase === "pending"
               ? isFixtureMode
                   ? "Sealing (sandbox theater)…"
-                  : "Sealing — awaiting confirmation…"
+                  : slow === "confirm"
+                    ? "Submitted — still confirming on GIWA. The transaction is broadcast; follow it via the tx link."
+                    : "Sealing — awaiting confirmation…"
               : phase === "sealed"
                 ? isFixtureMode
                     ? "License sealed. No chain traffic in sandbox mode."

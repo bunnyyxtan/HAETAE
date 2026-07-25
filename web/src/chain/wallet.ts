@@ -11,6 +11,7 @@ import {
     writeContract,
 } from "wagmi/actions";
 import { licenseAbi, licensedEvent, policyAbi } from "./abi";
+import { watchTx } from "./txWatch";
 import { addresses, RPC_URL } from "./deployment";
 import { decodeHaetaeError } from "./errors";
 import { giwaSepolia, publicClient, wagmiConfig } from "./giwa";
@@ -197,14 +198,13 @@ export async function sendSetVenue(agentAddr: string, venueAddr: string, allowed
 }
 
 // Resolves true when the tx landed successfully, false when it reverted.
-// Throws on timeout (30s — thirty 1s blocks without inclusion means something
-// is genuinely wrong; the UI unlocks and points at the explorer).
-export async function waitTx(hash: Hex): Promise<boolean> {
-    const receipt = await publicClient.waitForTransactionReceipt({
-        hash,
-        timeout: 30_000,
-    });
-    return receipt.status === "success";
+// Task #20 fix: a receipt-poll timeout is NOT a verdict. The watcher keeps
+// going (onStillWaiting lets the UI say "submitted — confirming…" honestly)
+// and only a real receipt or the exhausted budget (TxUnconfirmedError — an
+// explicit UNKNOWN, carrying the hash for the explorer link) ends the wait.
+export async function waitTx(hash: Hex, onStillWaiting?: (elapsedMs: number) => void): Promise<boolean> {
+    const { status } = await watchTx(publicClient, hash, { onStillWaiting });
+    return status === "success";
 }
 
 // Historical name kept for the revoke ceremony (S04).
@@ -212,13 +212,16 @@ export const waitRevoke = waitTx;
 
 // Mint wait that also reads the verdict: the Licensed event in the receipt
 // carries the freshly minted licenseId (the ceremony's sealed screen shows it).
-export async function waitMint(hash: Hex): Promise<{ ok: boolean; licenseId: number | null }> {
-    const receipt = await publicClient.waitForTransactionReceipt({
-        hash,
-        timeout: 30_000,
+export async function waitMint(
+    hash: Hex,
+    onStillWaiting?: (elapsedMs: number) => void,
+): Promise<{ ok: boolean; licenseId: number | null }> {
+    const { status, logs: rawLogs } = await watchTx(publicClient, hash, { onStillWaiting });
+    if (status !== "success") return { ok: false, licenseId: null };
+    const logs = parseEventLogs({
+        abi: [licensedEvent],
+        logs: rawLogs as Parameters<typeof parseEventLogs>[0]["logs"],
     });
-    if (receipt.status !== "success") return { ok: false, licenseId: null };
-    const logs = parseEventLogs({ abi: [licensedEvent], logs: receipt.logs });
     const id = logs[0]?.args.licenseId;
     return { ok: true, licenseId: id !== undefined ? Number(id) : null };
 }

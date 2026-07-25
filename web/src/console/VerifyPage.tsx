@@ -301,10 +301,17 @@ export default function VerifyPage() {
                         {view.policy && (
                             <section className="co-verify-section">
                                 <div className="co-papers-label">Policy summary</div>
+                                {/* Ruling (P3 walk observation): a dead policy is not a zero
+                                    cap — it is VOID. Numbers here would imply a live cap of
+                                    zero; historical spend stays, as history. */}
                                 <div className="co-verify-grid">
                                     <div className="co-papers-field">
                                         <div className="co-papers-label">Cap / day</div>
-                                        <div className="co-papers-value mono">${view.policy.capPerDay.toLocaleString()} tUSDC</div>
+                                        <div className="co-papers-value mono">
+                                            {view.verdict === "licensed"
+                                                ? `$${view.policy.capPerDay.toLocaleString()} tUSDC`
+                                                : `VOID · license ${view.verdict}`}
+                                        </div>
                                     </div>
                                     <div className="co-papers-field">
                                         <div className="co-papers-label">Spent today</div>
@@ -312,7 +319,11 @@ export default function VerifyPage() {
                                     </div>
                                     <div className="co-papers-field">
                                         <div className="co-papers-label">Remaining today</div>
-                                        <div className="co-papers-value mono">${view.policy.remainingToday.toLocaleString()}</div>
+                                        <div className="co-papers-value mono">
+                                            {view.verdict === "licensed"
+                                                ? `$${view.policy.remainingToday.toLocaleString()}`
+                                                : "—"}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="co-venue-chips">

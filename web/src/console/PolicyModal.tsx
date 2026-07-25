@@ -5,6 +5,7 @@ import { AgentLicense, formatAddress } from "./fixtures";
 import { isFixtureMode } from "../chain/mode";
 import { fetchPolicyDetail, fetchTokenPolicy, type PolicyDetail } from "../chain/reads";
 import { sendSetCap, sendSetVenue, waitTx, walletErrorMessage } from "../chain/wallet";
+import { TxUnconfirmedError, walletSlowTimer } from "../chain/txWatch";
 import { addresses, explorerTx } from "../chain/deployment";
 import { useModal } from "./useModal";
 
@@ -58,6 +59,9 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
 
     const [busy, setBusy] = useState<Busy>(null);
     const busyRef = useRef<Busy>(null);
+    // Task #20: true once the UI has entered an honest "cannot determine tx
+    // state" message — close is allowed from that point.
+    const slowRef = useRef(false);
     const setBusySync = (b: Busy) => {
         busyRef.current = b;
         setBusy(b);
@@ -94,7 +98,9 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
 
     const handleRequestClose = () => {
         // Same law as every tx ceremony: an in-flight write owns the modal.
-        if (busyRef.current !== null) return;
+        // Exception (Task #20): once the UI has honestly said it cannot
+        // determine tx state, the user may leave.
+        if (busyRef.current !== null && !slowRef.current) return;
         onClose();
     };
     const { dialogRef, requestClose } = useModal(handleRequestClose, opener);
@@ -107,12 +113,36 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
     ) => {
         if (busyRef.current) return;
         setBusySync(b);
+        slowRef.current = false;
         setTx({ stage: "wallet", msg: "Awaiting signature…", txHash: null });
+        // Task #20: wallet deadline — after 15s without a wallet response the
+        // label says so honestly and close unlocks.
+        const deadline = walletSlowTimer(() => {
+            if (!mountedRef.current || busyRef.current === null) return;
+            slowRef.current = true;
+            setTx({
+                stage: "wallet",
+                msg: "No wallet response yet — approve or reject the request in your wallet. You may close this dialog.",
+                txHash: null,
+            });
+        });
+        let sentHash: `0x${string}` | null = null;
         try {
             const hash = await send();
+            deadline.clear();
+            sentHash = hash;
             if (!mountedRef.current) return;
+            slowRef.current = false;
             setTx({ stage: "pending", msg: "Sealing — awaiting confirmation…", txHash: hash });
-            const ok = await waitTx(hash);
+            const ok = await waitTx(hash, () => {
+                if (!mountedRef.current) return;
+                slowRef.current = true;
+                setTx({
+                    stage: "pending",
+                    msg: "Submitted — still confirming on GIWA. Follow it via the tx link.",
+                    txHash: hash,
+                });
+            });
             if (!mountedRef.current) return;
             if (ok) {
                 setTx({ stage: "ok", msg: "Policy sealed.", txHash: hash });
@@ -123,9 +153,13 @@ export default function PolicyModal({ opener, onClose, agent, onPolicyChanged }:
                 setTx({ stage: "failed", msg: "Transaction reverted on-chain.", txHash: hash });
             }
         } catch (err) {
+            deadline.clear();
             if (!mountedRef.current) return;
-            setTx({ stage: "failed", msg: walletErrorMessage(err), txHash: null });
+            // An unconfirmed tx keeps its link — unknown is not "failed".
+            const keepHash = err instanceof TxUnconfirmedError ? sentHash : null;
+            setTx({ stage: "failed", msg: walletErrorMessage(err), txHash: keepHash });
         } finally {
+            slowRef.current = false;
             if (mountedRef.current) setBusySync(null);
         }
     };
