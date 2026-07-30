@@ -8,9 +8,9 @@ libs = ["lib"]
 solc_version = "0.8.24"
 optimizer = true
 optimizer_runs = 200
-# Enforces zero compiler warnings on all src/ files (RULES.md R4).
+# Enforces zero compiler warnings on all src/ files.
 deny_warnings = true
 
 [rpc_endpoints]
-# Read-only config; no transaction happens without explicit human GO (RULES R5.2).
+# Read-only config; no transaction happens without an explicit deploy run.
 giwa_sepolia = "https://sepolia-rpc.giwa.io"

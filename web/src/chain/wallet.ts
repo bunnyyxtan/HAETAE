@@ -232,7 +232,7 @@ export async function waitMint(
     return { ok: true, licenseId: id !== undefined ? Number(id) : null };
 }
 
-// One decoder for every failure surface (RULES R4.6): delegate to the shared
+// One decoder for every failure surface: delegate to the shared
 // HAETAE error decoder so wallet rejections and contract reverts read the same
 // everywhere.
 export function walletErrorMessage(err: unknown): string {

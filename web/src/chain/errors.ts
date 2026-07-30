@@ -1,6 +1,6 @@
 import { BaseError, ContractFunctionRevertedError } from "viem";
 
-// One decoder for every HAETAE custom error (RULES R4.6: the UI shows decoded
+// One decoder for every HAETAE custom error (the UI shows decoded
 // names and plain sentences, never raw hex). viem surfaces simulated and
 // mined reverts as ContractFunctionRevertedError with the errorName resolved
 // against the ABI that made the call; RPC-mangled paths degrade to message

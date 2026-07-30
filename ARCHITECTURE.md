@@ -1,6 +1,6 @@
-# HAETAE — Architecture
+# HAETAE · Architecture
 
-**Version 2.0 (FULL PRODUCTION SCOPE) · 22 Jul 2026 · Read docs/process/PRD.md first. The tree here is LAW — see docs/process/RULES.md R2.**
+**Version 2.0 · 22 Jul 2026**
 
 ## 1. Stack (locked)
 
@@ -8,12 +8,12 @@
 | --- | --- | --- |
 | Contracts | Solidity ^0.8.24, **Foundry** | Mirrors GIWA's own dojang repo conventions |
 | Contract deps | OpenZeppelin, forge-std, EAS interfaces (dojang deployments), @account-abstraction/contracts (EntryPoint v0.7 interfaces) | Audited, minimal |
-| Monorepo | **pnpm workspaces** | contracts / sdk / indexer / sentinel / agents / web |
+| Repo layout | npm packages | contracts / web today; sdk / indexer / sentinel / agents arrive with the roadmap |
 | SDK | TypeScript + **viem** only; built with tsup; tested with vitest | Zero-dep credibility for integrators |
 | Services (indexer, sentinel) | Node 22 + TypeScript, **Hono** (HTTP), **better-sqlite3**, **zod** (config), **pino** (logs) | Boring, restart-safe, no ORM |
 | Frontend | Vite + React + TS, wagmi v2 + viem | No framework ceremony |
 | Styling | Hand-written CSS, semantic markup | Design.md arrives separately; reskin without rewiring |
-| CI | GitHub Actions: forge test + coverage + slither, pnpm -r typecheck/test | Green main branch is law |
+| CI | GitHub Actions: forge fmt/build/test, web typecheck/test/build | Green main branch is law |
 
 ## 2. Contract map (production set)
 
@@ -53,8 +53,7 @@ KILL   principal one-click OR sentinel auto ▶ revoke ▶ next action reverts e
 ```
 haetae/
 ├── ARCHITECTURE.md README.md DEMO.md LICENSE
-├── docs/process/  (PRD RULES PHASES SESSION_PROTOCOL PROMPTS MEMORY LOG HANDOFF replit.md)
-├── package.json  pnpm-workspace.yaml  .github/workflows/ci.yml
+├── .github/workflows/ci.yml
 ├── contracts/
 │   ├── foundry.toml  remappings.txt
 │   ├── src/
@@ -87,7 +86,7 @@ haetae/
 
 LOC budgets: contracts ≤ 250 · tests ≤ 300 · service files ≤ 200 · SDK files ≤ 150 · views ≤ 180 · hooks ≤ 100.
 
-## 5. Key decisions (settled — do not reopen without human sign-off)
+## 5. Key decisions (settled)
 
 | Decision | Choice | Why |
 | --- | --- | --- |

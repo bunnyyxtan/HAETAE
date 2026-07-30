@@ -20,7 +20,7 @@ contract SentinelAuthority {
     address public immutable admin;
 
     /// @notice Addresses allowed to flag agents. The sentinel service key lives here —
-    ///         role separation is law: it can revoke, never spend (RULES R5.1).
+    ///         role separation is law: it can revoke, never spend.
     mapping(address => bool) public isWatcher;
 
     // -------------------------------------------------------------------------
