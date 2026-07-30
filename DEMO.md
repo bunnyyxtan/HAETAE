@@ -1,7 +1,7 @@
 # DEMO — the three-minute walk
 
 Stage kit: the console — live at
-https://ai-enforcement-protocol.replit.app/console, or run locally
+https://haetae.xyz/console, or run locally
 (`cd web && npm install && npm run dev`, then open `/console`) — one terminal
 sitting in `contracts/`, one Blockscout tab
 (https://sepolia-explorer.giwa.io). A wallet is optional — this walk never

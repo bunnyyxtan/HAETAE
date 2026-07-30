@@ -8,7 +8,7 @@ contracts live on GIWA Sepolia as its reference implementation.
 
 ## See it in three minutes
 
-- **Live:** [ai-enforcement-protocol.replit.app/console](https://ai-enforcement-protocol.replit.app/console)
+- **Live:** [haetae.xyz/console](https://haetae.xyz/console)
   — the deployed console against GIWA Sepolia. Connect a wallet and license
   an agent yourself; `/verify/<agent>` answers wallet-free.
 - **Console, locally:** run it with the three commands below, then open

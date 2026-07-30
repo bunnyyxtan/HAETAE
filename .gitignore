@@ -62,3 +62,8 @@ contracts/lcov.info
 # Replit workspace plumbing — untracked at HEAD (S07 sweep): platform chat
 # session upload staging is disk-only; not part of the reviewed repo.
 attached_assets/
+
+# video exports stay local — never push
+*.mp4
+*.mov
+*.webm
