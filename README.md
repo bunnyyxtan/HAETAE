@@ -129,6 +129,8 @@ arguments alone.
 ```
 contracts/    Foundry project: registry, policy, gate, sentinel, verifier
 web/          the console and landing site (Vite + React)
+api/          Vercel serverless entry for the verification desk
+server/       the Express app behind it
 standard/     the draft ERC and integrator guide
 deployments/  committed deployment records (single source of truth)
 docs/         protocol specs
