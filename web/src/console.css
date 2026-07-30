@@ -618,6 +618,53 @@ html:has(.co-app) {
     margin-bottom: 12px;
 }
 
+/* ---- Entry state (amendment: disconnected Registry/Agents) ------------ */
+
+.co-entry {
+    padding: 90px 20px 70px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+}
+.co-entry-line {
+    font-family: "Fraunces", serif;
+    font-size: 30px;
+    line-height: 1.25;
+    color: var(--ink);
+    max-width: 540px;
+    margin: 0;
+}
+.co-entry-ctas {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.co-entry-lookup {
+    display: flex;
+    gap: 8px;
+    width: min(460px, 100%);
+}
+.co-entry-lookup .co-input { flex: 1; }
+.co-entry-browse {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    color: var(--stone);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 4px;
+    transition: color 0.15s ease;
+}
+.co-entry-browse:hover { color: var(--ink); }
+
 /* ---- S04 Stage B: live-chain additions ------------------------------- */
 
 .co-retry-btn {

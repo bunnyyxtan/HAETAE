@@ -9,6 +9,7 @@ import PapersModal from "./PapersModal";
 import RevokeModal from "./RevokeModal";
 import PolicyModal from "./PolicyModal";
 import MintModal, { type MintResult } from "./MintModal";
+import EntryGate from "./EntryGate";
 
 interface Activity {
     count: number;
@@ -32,6 +33,14 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
     const [activityError, setActivityError] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
     const refetchSeqRef = useRef(0);
+    // Amendment to the scoping ruling: disconnected visitors land on the
+    // entry state; the full dossier grid sits one explicit click away.
+    const [browsePublic, setBrowsePublic] = useState(false);
+    useEffect(() => {
+        // A disconnect returns the page to the entry state, not the record.
+        if (!connectedAddress) setBrowsePublic(false);
+    }, [connectedAddress]);
+    const gateActive = !connectedAddress && !browsePublic;
 
     const [papersAgent, setPapersAgent] = useState<AgentLicense | null>(null);
     const [papersOpener, setPapersOpener] = useState<HTMLElement | null>(null);
@@ -44,6 +53,9 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
     const [relicenseAgent, setRelicenseAgent] = useState<AgentLicense | null>(null);
 
     useEffect(() => {
+        // Entry state fetches nothing: no data dump behind the curtain and no
+        // skeleton cards pretending to be content (ceremony law).
+        if (gateActive) return;
         refetchSeqRef.current++;
         setLoading(true);
         setError(false);
@@ -106,7 +118,7 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
         return () => {
             cancelled = true;
         };
-    }, [reloadKey]);
+    }, [reloadKey, gateActive]);
 
     const activityFor = (agent: AgentLicense): Activity | null => {
         if (!activity) return null;
@@ -249,7 +261,11 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
                 </p>
             </div>
 
-            {loading && (
+            {gateActive && (
+                <EntryGate onConnect={onRequestConnect} onBrowse={() => setBrowsePublic(true)} />
+            )}
+
+            {!gateActive && loading && (
                 <div className="co-agent-grid" aria-hidden>
                     {Array.from({ length: 4 }).map((_, i) => (
                         <div key={i} className="co-agent-card">
@@ -262,7 +278,7 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
                 </div>
             )}
 
-            {!loading && error && (
+            {!gateActive && !loading && error && (
                 <div className="co-empty">
                     <div className="co-empty-msg" style={{ color: "var(--vermillion)" }}>Ledger Unreachable</div>
                     <p className="co-page-desc" style={{ margin: "0 auto" }}>The chain is not responding. Check your connection.</p>
@@ -272,7 +288,7 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
                 </div>
             )}
 
-            {!loading && !error && agents.length === 0 && (
+            {!gateActive && !loading && !error && agents.length === 0 && (
                 <div className="co-empty">
                     <div className="co-empty-msg">The ledger is empty.</div>
                     <p className="co-page-desc" style={{ margin: "0 auto" }}>No agents have been licensed on this network yet.</p>
@@ -282,7 +298,7 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
                 </div>
             )}
 
-            {!loading && !error && agents.length > 0 && (
+            {!gateActive && !loading && !error && agents.length > 0 && (
                 <div className="co-agent-grid">
                     {agents.map((agent, i) => {
                         const act = activityFor(agent);

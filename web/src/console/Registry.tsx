@@ -8,6 +8,7 @@ import PapersModal from "./PapersModal";
 import RevokeModal from "./RevokeModal";
 import PolicyModal from "./PolicyModal";
 import MintModal, { type MintResult } from "./MintModal";
+import EntryGate from "./EntryGate";
 
 interface RegistryProps {
     connectedAddress: string | null;
@@ -20,12 +21,18 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
     const [error, setError] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
     // Scoping default (console-only, nothing hidden from /verify or deleted):
-    // wallet connected → "My agents"; disconnected → full public registry.
+    // wallet connected → "My agents"; disconnected → the entry state
+    // (amendment to the scoping ruling), with the full public record one
+    // explicit click away behind the browse link.
     const [mineOnly, setMineOnly] = useState(!!connectedAddress);
+    const [browsePublic, setBrowsePublic] = useState(false);
 
     useEffect(() => {
         setMineOnly(!!connectedAddress);
+        // A disconnect returns the page to the entry state, not the record.
+        if (!connectedAddress) setBrowsePublic(false);
     }, [connectedAddress]);
+    const gateActive = !connectedAddress && !browsePublic;
     // Monotone token: overlapping silent refetches (rapid successive writes)
     // can resolve out of order — only the newest snapshot may land.
     const refetchSeqRef = useRef(0);
@@ -46,6 +53,9 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
     const [relicenseAgent, setRelicenseAgent] = useState<AgentLicense | null>(null);
 
     useEffect(() => {
+        // Entry state fetches nothing: no data dump behind the curtain and no
+        // skeleton rows pretending to be content (ceremony law).
+        if (gateActive) return;
         refetchSeqRef.current++; // a fresh load invalidates in-flight silent refetches
         setLoading(true);
         setError(false);
@@ -77,7 +87,7 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
         return () => {
             cancelled = true;
         };
-    }, [reloadKey]);
+    }, [reloadKey, gateActive]);
 
     // Live: a confirmed write (revoke/mint/policy) refreshes rows silently so
     // the table shows chain truth, not a local guess.
@@ -232,6 +242,7 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
             <div className="co-page-header">
                 <h1 className="co-page-title font-display">Agent Registry</h1>
                 <p className="co-page-desc">Licensed agents operating on the GIWA network. Revocation is one block.</p>
+                {!gateActive && (
                 <div className="co-header-actions">
                     <button className="co-btn-primary" onClick={() => openMint(null)}>
                         License an Agent
@@ -256,8 +267,14 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
                         </>
                     )}
                 </div>
+                )}
             </div>
 
+            {gateActive && (
+                <EntryGate onConnect={onRequestConnect} onBrowse={() => setBrowsePublic(true)} />
+            )}
+
+            {!gateActive && (
             <div className="co-table-wrap">
                 <table className="co-table">
                     <thead>
@@ -379,6 +396,7 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
                     </tbody>
                 </table>
             </div>
+            )}
 
             {/* key={licenseNo} is load-bearing: without it, AnimatePresence recycles an
                 EXITING modal instance (props frozen at the old agent) when another row's
