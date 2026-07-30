@@ -1,4 +1,11 @@
-import { getAddress, hexToString, type GetLogsReturnType } from "viem";
+import {
+    getAddress,
+    hexToString,
+    type AbiEvent,
+    type Address,
+    type GetLogsParameters,
+    type GetLogsReturnType,
+} from "viem";
 import type { AgentRow, LedgerRow } from "./types";
 import {
     licenseAbi,
@@ -29,6 +36,48 @@ function decodeScope(scope: `0x${string}`): string | null {
     } catch {
         return null;
     }
+}
+
+// GIWA's public RPC caps eth_getLogs at a 100 000-block span per query
+// (probed 2026-07-30: toBlock - fromBlock <= 100_000 passes; one block more is
+// rejected with "query exceeds max block range 100000"). The chain has grown
+// past DEPLOY_BLOCK + cap, so a single full-history getLogs can never succeed
+// again. scanLogs is therefore the only getLogs entry point in the app: it
+// walks [DEPLOY_BLOCK, latest] in capped windows (issued concurrently —
+// JSON-RPC batching collapses them into a handful of HTTP requests) and
+// concatenates the results in ascending block order.
+const MAX_GETLOGS_SPAN = 100_000n;
+
+async function scanLogs<TEvent extends AbiEvent>(filter: {
+    address: Address;
+    event: TEvent;
+    args?: GetLogsParameters<TEvent>["args"];
+}): Promise<GetLogsReturnType<TEvent>> {
+    const latest = await publicClient.getBlockNumber();
+    const windows: { fromBlock: bigint; toBlock: bigint }[] = [];
+    for (let from = DEPLOY_BLOCK; from <= latest; from += MAX_GETLOGS_SPAN + 1n) {
+        const to = from + MAX_GETLOGS_SPAN < latest ? from + MAX_GETLOGS_SPAN : latest;
+        windows.push({ fromBlock: from, toBlock: to });
+    }
+    const chunks = await Promise.all(
+        windows.map(({ fromBlock, toBlock }) => {
+            // Regression guard: a span past the RPC cap must never be requested,
+            // whatever future edits do to the window math above.
+            if (toBlock - fromBlock > MAX_GETLOGS_SPAN) {
+                throw new Error(
+                    `getLogs span ${fromBlock}-${toBlock} exceeds the ${MAX_GETLOGS_SPAN}-block RPC cap`,
+                );
+            }
+            return publicClient.getLogs({
+                address: filter.address,
+                event: filter.event,
+                args: filter.args,
+                fromBlock,
+                toBlock,
+            });
+        }),
+    );
+    return chunks.flat() as GetLogsReturnType<TEvent>;
 }
 
 // Registry rows: ERC721Enumerable walk -> licenseById -> policy views.
@@ -112,10 +161,9 @@ export async function fetchRegistry(): Promise<AgentRow[]> {
 }
 
 async function fetchIssuedBlocks(): Promise<Map<bigint, bigint>> {
-    const logs = await publicClient.getLogs({
+    const logs = await scanLogs({
         address: addresses.license,
         event: licensedEvent,
-        fromBlock: DEPLOY_BLOCK,
     });
     const map = new Map<bigint, bigint>();
     for (const log of logs) {
@@ -146,14 +194,13 @@ const evAgent = (agent: string | undefined): string =>
 
 export async function fetchCourtRecord(agentAddr: string): Promise<CourtEvent[]> {
     const agent = getAddress(agentAddr);
-    const fromBlock = DEPLOY_BLOCK;
 
     const [lic, rev, verd, exec, ref] = await Promise.all([
-        publicClient.getLogs({ address: addresses.license, event: licensedEvent, args: { agent }, fromBlock }),
-        publicClient.getLogs({ address: addresses.license, event: revokedEvent, args: { agent }, fromBlock }),
-        publicClient.getLogs({ address: addresses.sentinel, event: sentinelVerdictEvent, args: { agent }, fromBlock }),
-        publicClient.getLogs({ address: addresses.vault, event: tradeExecutedEvent, args: { agent }, fromBlock }),
-        publicClient.getLogs({ address: addresses.vault, event: tradeRefusedEvent, args: { agent }, fromBlock }),
+        scanLogs({ address: addresses.license, event: licensedEvent, args: { agent } }),
+        scanLogs({ address: addresses.license, event: revokedEvent, args: { agent } }),
+        scanLogs({ address: addresses.sentinel, event: sentinelVerdictEvent, args: { agent } }),
+        scanLogs({ address: addresses.vault, event: tradeExecutedEvent, args: { agent } }),
+        scanLogs({ address: addresses.vault, event: tradeRefusedEvent, args: { agent } }),
     ]);
 
     return toCourtEvents(lic, rev, verd, exec, ref);
@@ -163,14 +210,12 @@ export async function fetchCourtRecord(agentAddr: string): Promise<CourtEvent[]>
 // entire court record in one batched read (5 getLogs, shared via JSON-RPC
 // batching; no per-agent fan-out).
 export async function fetchLedger(): Promise<LedgerRow[]> {
-    const fromBlock = DEPLOY_BLOCK;
-
     const [lic, rev, verd, exec, ref] = await Promise.all([
-        publicClient.getLogs({ address: addresses.license, event: licensedEvent, fromBlock }),
-        publicClient.getLogs({ address: addresses.license, event: revokedEvent, fromBlock }),
-        publicClient.getLogs({ address: addresses.sentinel, event: sentinelVerdictEvent, fromBlock }),
-        publicClient.getLogs({ address: addresses.vault, event: tradeExecutedEvent, fromBlock }),
-        publicClient.getLogs({ address: addresses.vault, event: tradeRefusedEvent, fromBlock }),
+        scanLogs({ address: addresses.license, event: licensedEvent }),
+        scanLogs({ address: addresses.license, event: revokedEvent }),
+        scanLogs({ address: addresses.sentinel, event: sentinelVerdictEvent }),
+        scanLogs({ address: addresses.vault, event: tradeExecutedEvent }),
+        scanLogs({ address: addresses.vault, event: tradeRefusedEvent }),
     ]);
 
     return toCourtEvents(lic, rev, verd, exec, ref).map((ev) => ({
