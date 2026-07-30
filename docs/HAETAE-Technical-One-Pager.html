@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HAETAE · Technical One-Pager</title>
+<style>
+  @font-face {
+    font-family: "Fraunces";
+    src: url("../web/src/assets/fonts/fraunces-latin-300-900.woff2") format("woff2");
+    font-weight: 300 900;
+    font-display: block;
+  }
+  @font-face {
+    font-family: "Manrope";
+    src: url("../web/src/assets/fonts/manrope-latin-400.woff2") format("woff2");
+    font-weight: 400; font-display: block;
+  }
+  @font-face {
+    font-family: "Manrope";
+    src: url("../web/src/assets/fonts/manrope-latin-500.woff2") format("woff2");
+    font-weight: 500; font-display: block;
+  }
+  @font-face {
+    font-family: "Manrope";
+    src: url("../web/src/assets/fonts/manrope-latin-600.woff2") format("woff2");
+    font-weight: 600; font-display: block;
+  }
+  @font-face {
+    font-family: "JetBrains Mono";
+    src: url("../web/src/assets/fonts/jetbrains-mono-latin-400.woff2") format("woff2");
+    font-weight: 400; font-display: block;
+  }
+  @font-face {
+    font-family: "JetBrains Mono";
+    src: url("../web/src/assets/fonts/jetbrains-mono-latin-500.woff2") format("woff2");
+    font-weight: 500; font-display: block;
+  }
+
+  :root {
+    --ivory: #f4efe6;
+    --ink: #1a1613;
+    --verm: #c8341c;
+    --hair: rgba(26, 22, 19, 0.18);
+    --muted: rgba(26, 22, 19, 0.62);
+  }
+
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--ivory); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    font-family: "Manrope", sans-serif;
+    font-weight: 400;
+    color: var(--ink);
+    font-size: 9.5pt;
+    line-height: 1.45;
+  }
+
+  .page {
+    width: 210mm;
+    height: 297mm;
+    padding: 12mm 14mm 10mm;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .kicker {
+    white-space: nowrap;
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: var(--verm);
+  }
+
+  /* ---------- header ---------- */
+  header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .h-left h1 {
+    font-family: "Fraunces", serif;
+    font-weight: 620;
+    font-size: 27pt;
+    letter-spacing: 0.015em;
+    line-height: 1;
+  }
+  .h-left .tagline {
+    font-family: "Fraunces", serif;
+    font-weight: 420;
+    font-size: 11.5pt;
+    margin-top: 2.4mm;
+    white-space: nowrap;
+  }
+  .h-right { text-align: right; padding-top: 1mm; }
+  .h-right .meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9pt;
+    line-height: 1.75;
+    color: var(--muted);
+    margin-top: 2.2mm;
+  }
+  .h-right .meta b { color: var(--ink); font-weight: 500; }
+
+  .rule { border: 0; border-top: 1.6px solid var(--ink); margin: 4mm 0 0; }
+
+  section { margin-top: 3.8mm; }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2.2mm; }
+  .sec-note { font-size: 9pt; color: var(--muted); }
+
+  /* ---------- contract table ---------- */
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th {
+    font-size: 9pt; font-weight: 600;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 0 0 1.6mm;
+    border-bottom: 1px solid var(--ink);
+  }
+  td {
+    line-height: 1.35;
+    padding: 1.3mm 0;
+    border-bottom: 1px solid var(--hair);
+    vertical-align: baseline;
+  }
+  tr:last-child td { border-bottom: 1px solid var(--ink); }
+  td.name { font-weight: 600; font-size: 9.5pt; padding-right: 2.5mm; }
+  td.role { font-size: 9.5pt; padding-right: 3mm; }
+  td.addr {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9pt;
+    white-space: nowrap;
+  }
+  .tag {
+    display: block;
+    font-size: 9pt; font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--verm);
+    margin-top: 0.4mm;
+  }
+  .uid-row {
+    display: flex; align-items: baseline; gap: 3mm;
+    margin-top: 2mm;
+  }
+  .uid-row .lbl {
+    font-size: 9pt; font-weight: 600; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--muted); white-space: nowrap;
+  }
+  .uid-row .uid { font-family: "JetBrains Mono", monospace; font-size: 9pt; white-space: nowrap; }
+
+  /* ---------- flow ---------- */
+  .flow {
+    font-family: "Fraunces", serif;
+    font-weight: 480;
+    font-size: 11pt;
+    line-height: 1.68;
+  }
+  .flow .step { white-space: nowrap; }
+  .flow .arr { color: var(--verm); padding: 0 0.45em; font-weight: 400; }
+  .flow-note { margin-top: 1.6mm; font-size: 9.5pt; color: var(--muted); }
+
+  /* ---------- lanes ---------- */
+  .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  .lane .lane-name { font-weight: 600; font-size: 9.5pt; }
+  .lane p { margin-top: 0.8mm; }
+  .lanes-note { margin-top: 1.8mm; font-size: 9.5pt; color: var(--muted); }
+  .lanes-note code { font-family: "JetBrains Mono", monospace; font-size: 9pt; color: var(--ink); }
+
+  /* ---------- execution ---------- */
+  .exec { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8mm; row-gap: 1.7mm; }
+  .exec .item { display: flex; gap: 2.2mm; }
+  .exec .dot { color: var(--verm); font-weight: 600; }
+
+  /* ---------- footer ---------- */
+  footer {
+    margin-top: auto;
+    border-top: 1.6px solid var(--ink);
+    padding-top: 2.6mm;
+    display: flex; justify-content: space-between;
+    font-size: 9pt; color: var(--muted);
+  }
+  footer b { color: var(--ink); font-weight: 600; }
+  footer .mono { font-family: "JetBrains Mono", monospace; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="h-left">
+      <h1>HAETAE</h1>
+      <div class="tagline">Licenses and enforcement for AI agents on GIWA.</div>
+    </div>
+    <div class="h-right">
+      <div class="kicker">GASOK Submission &middot; Technical One-Pager</div>
+      <div class="meta">
+        GIWA Sepolia &middot; OP Stack L2 &middot; chain ID <b>91342</b><br>
+        Live <b>haetae.xyz</b><br>
+        Repo <b>github.com/bunnyyxtan/HAETAE</b>
+      </div>
+    </div>
+  </header>
+  <hr class="rule">
+
+  <section>
+    <div class="sec-head">
+      <div class="kicker">Contract Map</div>
+      <div class="sec-note">8 verified contracts on sepolia-explorer.giwa.io &middot; sandbox rows marked</div>
+    </div>
+    <table>
+      <colgroup><col style="width:36mm"><col><col style="width:82mm"></colgroup>
+      <thead>
+        <tr><th>Contract</th><th>Role</th><th>Address, GIWA Sepolia</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name">HaetaeDojang</td>
+          <td class="role">Identity verifier. Reads EAS attestations on the pinned schema.</td>
+          <td class="addr">0x93F054B9F9f957e323C66A4c4D8A03a67dA15F1B</td>
+        </tr>
+        <tr>
+          <td class="name">HaetaeLicense</td>
+          <td class="role">Soulbound license registry. Mint requires a verified principal.</td>
+          <td class="addr">0x7409E7Dc675f13957343340D2a6935fACA0773f8</td>
+        </tr>
+        <tr>
+          <td class="name">HaetaePolicy</td>
+          <td class="role">Per-agent daily caps and venue allowlists. A change is one transaction.</td>
+          <td class="addr">0xF8f909C5Dc9D0e80D5E1b0332450fAF3D79D9C7d</td>
+        </tr>
+        <tr>
+          <td class="name">HaetaeGate</td>
+          <td class="role">The gate. Every trade passes license and policy checks or reverts.</td>
+          <td class="addr">0x82345FC04BDaa853A11115C557B1c54dF9dc48EF</td>
+        </tr>
+        <tr>
+          <td class="name">SentinelAuthority</td>
+          <td class="role">Watcher-run revocation. Each verdict carries an on-chain reason.</td>
+          <td class="addr">0xE5f518d0F2326878cd248785eA54B82B7dE2E359</td>
+        </tr>
+        <tr>
+          <td class="name">SandboxVerifier<span class="tag">SANDBOX</span></td>
+          <td class="role">Test-only identity verifier for the sandbox stack.</td>
+          <td class="addr">0x0be98AC93313172791BCF5Aaf19ef28bB9265Cba</td>
+        </tr>
+        <tr>
+          <td class="name">TestUSDC<span class="tag">SANDBOX</span></td>
+          <td class="role">Test token for sandbox trades.</td>
+          <td class="addr">0x3f9EC3DBFEca9ddc6c41A7f8924C39665EBfCE12</td>
+        </tr>
+        <tr>
+          <td class="name">ReferenceVault<span class="tag">SANDBOX</span></td>
+          <td class="role">Reference venue. The gated demo target.</td>
+          <td class="addr">0xb419F747AF35490F6c8e26aA2A07B1AbEc126879</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="uid-row">
+      <span class="lbl">EAS Schema UID</span>
+      <span class="uid">0xc9ea07c86e2c537ef31d9c3e01722afcad0a3473ff631c1ffaf38a39d9f7fbb0</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="kicker">Enforcement Flow</div>
+      <div class="sec-note">fail closed at every step</div>
+    </div>
+    <div class="flow">
+      <span class="step">principal verified via Dojang</span> <span class="arr">&rarr;</span> <span class="step">license minted to the agent</span> <span class="arr">&rarr;</span> <span class="step">policy set: cap and venues</span> <span class="arr">&rarr;</span> <span class="step">agent trades through the gate</span> <span class="arr">&rarr;</span> <span class="step">unlicensed or out of policy reverts</span> <span class="arr">&rarr;</span> <span class="step">revocation lands in one block</span> <span class="arr">&rarr;</span> <span class="step">permanent public verdict page</span>
+    </div>
+    <div class="flow-note">
+      The default is refusal. A missing license, an expired license, a spent cap, or an unknown venue ends the same way: the trade reverts.
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="kicker">Identity</div>
+      <div class="sec-note">two lanes, one interface</div>
+    </div>
+    <div class="lanes">
+      <div class="lane">
+        <div class="lane-name">Lane 1 &middot; DojangScroll</div>
+        <p>Reads Upbit Korea verification attestations. This is the mainnet rail.</p>
+      </div>
+      <div class="lane">
+        <div class="lane-name">Lane 2 &middot; GIWA EAS predeploy</div>
+        <p>Attestations on GIWA&rsquo;s EAS predeploy. Live on testnet with the self-serve verification desk.</p>
+      </div>
+    </div>
+    <div class="lanes-note">
+      Both lanes sit behind one interface, <code>IVerifiedAddress</code>. Switching lanes is constructor arguments, not new code.
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="kicker">Technical Execution</div>
+    </div>
+    <div class="exec">
+      <div class="item"><span class="dot">&middot;</span><span><b>102 passing tests.</b> Zero failed, zero skipped, invariants included.</span></div>
+      <div class="item"><span class="dot">&middot;</span><span>Line coverage above 90 percent on contracts, held as an exit law.</span></div>
+      <div class="item"><span class="dot">&middot;</span><span>Slither audited. Every finding triaged on the record.</span></div>
+      <div class="item"><span class="dot">&middot;</span><span>The contracts on the trade path are immutable and fail closed.</span></div>
+      <div class="item"><span class="dot">&middot;</span><span>No database. The chain is the record.</span></div>
+      <div class="item"><span class="dot">&middot;</span><span>Stateless server with a single secret.</span></div>
+      <div class="item"><span class="dot">&middot;</span><span>The SPA ships from the same hardened Express process.</span></div>
+    </div>
+  </section>
+
+  <footer>
+    <div><b>Shivam Sutra Dhar</b> &middot; solo builder</div>
+    <div>MIT License</div>
+    <div>Standard: <span class="mono">haetae.xyz/#standard</span></div>
+    <div>Explorer: <span class="mono">sepolia-explorer.giwa.io</span></div>
+  </footer>
+
+</div>
+</body>
+</html>
