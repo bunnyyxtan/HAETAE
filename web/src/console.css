@@ -649,21 +649,6 @@ html:has(.co-app) {
     width: min(460px, 100%);
 }
 .co-entry-lookup .co-input { flex: 1; }
-.co-entry-browse {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    background: none;
-    border: none;
-    color: var(--stone);
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    padding: 4px;
-    transition: color 0.15s ease;
-}
-.co-entry-browse:hover { color: var(--ink); }
 
 /* ---- S04 Stage B: live-chain additions ------------------------------- */
 

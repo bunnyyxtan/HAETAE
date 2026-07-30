@@ -15,24 +15,22 @@ interface RegistryProps {
     onRequestConnect: () => void;
 }
 
+// FINAL RULING (wallet-scoped console): the console never renders another
+// principal's rows. Disconnected shows the entry state and fetches nothing;
+// connected shows the connected principal's licenses only. The global
+// registry view is deleted from this surface, not hidden. The only public
+// surface is /verify with an explicitly entered address.
+const scopedTo = (rows: AgentLicense[], me: string) => {
+    const key = me.toLowerCase();
+    return rows.filter((a) => a.principal && a.principal.toLowerCase() === key);
+};
+
 export default function Registry({ connectedAddress, onRequestConnect }: RegistryProps) {
     const [loading, setLoading] = useState(true);
     const [agents, setAgents] = useState<AgentLicense[]>([]);
     const [error, setError] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
-    // Scoping default (console-only, nothing hidden from /verify or deleted):
-    // wallet connected → "My agents"; disconnected → the entry state
-    // (amendment to the scoping ruling), with the full public record one
-    // explicit click away behind the browse link.
-    const [mineOnly, setMineOnly] = useState(!!connectedAddress);
-    const [browsePublic, setBrowsePublic] = useState(false);
-
-    useEffect(() => {
-        setMineOnly(!!connectedAddress);
-        // A disconnect returns the page to the entry state, not the record.
-        if (!connectedAddress) setBrowsePublic(false);
-    }, [connectedAddress]);
-    const gateActive = !connectedAddress && !browsePublic;
+    const gateActive = !connectedAddress;
     // Monotone token: overlapping silent refetches (rapid successive writes)
     // can resolve out of order — only the newest snapshot may land.
     const refetchSeqRef = useRef(0);
@@ -53,30 +51,33 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
     const [relicenseAgent, setRelicenseAgent] = useState<AgentLicense | null>(null);
 
     useEffect(() => {
-        // Entry state fetches nothing: no data dump behind the curtain and no
-        // skeleton rows pretending to be content (ceremony law).
-        if (gateActive) return;
+        // Entry state fetches nothing: no data behind the curtain and no
+        // loading rows before a known result (ceremony law).
+        if (!connectedAddress) return;
         refetchSeqRef.current++; // a fresh load invalidates in-flight silent refetches
         setLoading(true);
         setError(false);
         if (isFixtureMode) {
+            // Sandbox rehearses the same law: the fixture wallet is the
+            // principal, and only its rows exist on this surface.
             const timer = setTimeout(() => {
                 if (flags.forceError) {
                     setError(true);
                 } else {
-                    setAgents(flags.forceEmpty ? [] : agentFixtures);
+                    setAgents(flags.forceEmpty ? [] : scopedTo(agentFixtures, connectedAddress));
                 }
                 setLoading(false);
             }, flags.loadDelayMs);
             return () => clearTimeout(timer);
         }
         // Live: registry rows from ERC721Enumerable + licenseById + policy
-        // views. Failure shows the error state — no silent fixture fallback.
+        // views, scoped to the connected principal before they touch state.
+        // Failure shows the error state — no silent fixture fallback.
         let cancelled = false;
         fetchRegistry()
             .then((rows) => {
                 if (cancelled) return;
-                setAgents(rows);
+                setAgents(scopedTo(rows, connectedAddress));
                 setLoading(false);
             })
             .catch(() => {
@@ -87,7 +88,7 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
         return () => {
             cancelled = true;
         };
-    }, [reloadKey, gateActive]);
+    }, [reloadKey, connectedAddress]);
 
     // Live: a confirmed write (revoke/mint/policy) refreshes rows silently so
     // the table shows chain truth, not a local guess.
@@ -96,13 +97,13 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
     // on-chain (status 2, no un-revoke path), so a locally ghosted row must
     // never be resurrected by a stale read.
     const silentRefetch = () => {
-        if (isFixtureMode) return;
+        if (isFixtureMode || !connectedAddress) return;
         const seq = ++refetchSeqRef.current;
         fetchRegistry()
             .then((rows) => {
                 if (seq !== refetchSeqRef.current) return; // stale response, drop
                 setAgents((prev) =>
-                    rows.map((r) => {
+                    scopedTo(rows, connectedAddress).map((r) => {
                         const local = prev.find((p) => p.licenseNo === r.licenseNo);
                         return local?.status === "ghost" && r.status !== "ghost"
                             ? { ...r, status: "ghost" as const }
@@ -133,7 +134,7 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
     // Mint entry: in live mode the ceremony needs a signer, so a disconnected
     // click routes to the connect modal instead of a dead-end form.
     const openMint = (relicense: AgentLicense | null) => {
-        if (!isFixtureMode && !connectedAddress) {
+        if (!connectedAddress) {
             onRequestConnect();
             return;
         }
@@ -158,7 +159,8 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
             return;
         }
         // Fixture theater: the page owns numbering — next HT number after the
-        // highest on the books (re-mints keep the old ghost row, chain truth).
+        // highest on this principal's books (re-mints keep the old ghost row,
+        // chain truth).
         setAgents((prev) => {
             const nextNum =
                 prev.reduce((m, a) => {
@@ -203,15 +205,10 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
         );
     };
 
-    // In live mode writes are real: only the license's principal can sign, so
-    // owner-only actions show only for rows the connected wallet owns.
-    // Fixture mode keeps the ungated S02 ceremony as demo insurance.
-    const canOperate = (agent: AgentLicense) =>
-        agent.status !== "ghost" &&
-        (isFixtureMode ||
-            (!!connectedAddress &&
-                !!agent.principal &&
-                connectedAddress.toLowerCase() === agent.principal.toLowerCase()));
+    // Every row on this surface is scoped to the connected principal by
+    // construction, so ownership is implied; ghost is the only gate on the
+    // owner ceremonies.
+    const canOperate = (agent: AgentLicense) => agent.status !== "ghost";
 
     // Re-license: revoked ids are terminal (Law 2) — this mints a NEW id for
     // the same agent address, prefilled in the ceremony.
@@ -219,18 +216,7 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
         agent.status === "ghost" &&
         !agents.some(
             (a) => a.status === "licensed" && a.address.toLowerCase() === agent.address.toLowerCase(),
-        ) &&
-        (isFixtureMode ||
-            (!!connectedAddress &&
-                !!agent.principal &&
-                connectedAddress.toLowerCase() === agent.principal.toLowerCase()));
-
-    const displayed =
-        mineOnly && connectedAddress
-            ? agents.filter(
-                  (a) => a.principal && a.principal.toLowerCase() === connectedAddress.toLowerCase(),
-              )
-            : agents;
+        );
 
     return (
         <motion.div
@@ -241,40 +227,38 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
         >
             <div className="co-page-header">
                 <h1 className="co-page-title font-display">Agent Registry</h1>
-                <p className="co-page-desc">Licensed agents operating on the GIWA network. Revocation is one block.</p>
-                {!gateActive && (
+                <p className="co-page-desc">Agents licensed to this wallet. Revocation is one block.</p>
+                {!gateActive && !loading && !error && (
                 <div className="co-header-actions">
                     <button className="co-btn-primary" onClick={() => openMint(null)}>
                         License an Agent
                     </button>
-                    {connectedAddress && (
-                        <>
-                            <button
-                                className={`co-chip ${mineOnly ? "is-on" : ""}`}
-                                aria-pressed={mineOnly}
-                                onClick={() => setMineOnly(true)}
-                            >
-                                My agents
-                            </button>
-                            <button
-                                className={`co-chip ${!mineOnly ? "is-on" : ""}`}
-                                aria-pressed={!mineOnly}
-                                onClick={() => setMineOnly(false)}
-                                title="The public record — every license on the protocol"
-                            >
-                                Full registry
-                            </button>
-                        </>
-                    )}
                 </div>
                 )}
             </div>
 
-            {gateActive && (
-                <EntryGate onConnect={onRequestConnect} onBrowse={() => setBrowsePublic(true)} />
+            {gateActive && <EntryGate onConnect={onRequestConnect} />}
+
+            {!gateActive && !loading && error && (
+                <div className="co-empty">
+                    <div className="co-empty-msg" style={{ color: "var(--vermillion)" }}>Ledger Unreachable</div>
+                    <p className="co-page-desc" style={{ margin: "0 auto" }}>The chain is not responding. Check your connection.</p>
+                    <button className="co-action-btn co-retry-btn" onClick={() => setReloadKey(k => k + 1)}>
+                        Retry
+                    </button>
+                </div>
             )}
 
-            {!gateActive && (
+            {!gateActive && !loading && !error && agents.length === 0 && (
+                <div className="co-empty">
+                    <div className="co-empty-msg">No agents licensed to this wallet yet.</div>
+                    <button className="co-action-btn co-retry-btn" onClick={() => openMint(null)}>
+                        License an Agent
+                    </button>
+                </div>
+            )}
+
+            {!gateActive && !loading && !error && agents.length > 0 && (
             <div className="co-table-wrap">
                 <table className="co-table">
                     <thead>
@@ -290,62 +274,7 @@ export default function Registry({ connectedAddress, onRequestConnect }: Registr
                         </tr>
                     </thead>
                     <tbody>
-                        {loading && Array.from({ length: 6 }).map((_, i) => (
-                            <tr key={i} className="co-tr">
-                                <td className="co-td"><div className="co-skel" style={{ width: 120, height: 16 }} /></td>
-                                <td className="co-td"><div className="co-skel" style={{ width: 100, height: 16 }} /></td>
-                                <td className="co-td"><div className="co-skel" style={{ width: 80, height: 16 }} /></td>
-                                <td className="co-td"><div className="co-skel" style={{ width: 60, height: 16 }} /></td>
-                                <td className="co-td"><div className="co-skel" style={{ width: 140, height: 16 }} /></td>
-                                <td className="co-td"><div className="co-skel" style={{ width: 100, height: 16 }} /></td>
-                                <td className="co-td"><div className="co-skel" style={{ width: 80, height: 16 }} /></td>
-                                <td className="co-td"><div className="co-skel" style={{ width: 100, height: 16 }} /></td>
-                            </tr>
-                        ))}
-
-                        {!loading && error && (
-                            <tr>
-                                <td colSpan={8}>
-                                    <div className="co-empty">
-                                        <div className="co-empty-msg" style={{ color: "var(--vermillion)" }}>Ledger Unreachable</div>
-                                        <p className="co-page-desc" style={{ margin: "0 auto" }}>The chain is not responding. Check your connection.</p>
-                                        <button className="co-action-btn co-retry-btn" onClick={() => setReloadKey(k => k + 1)}>
-                                            Retry
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-
-                        {!loading && !error && agents.length === 0 && (
-                            <tr>
-                                <td colSpan={8}>
-                                    <div className="co-empty">
-                                        <div className="co-empty-msg">The ledger is empty.</div>
-                                        <p className="co-page-desc" style={{ margin: "0 auto" }}>No agents have been licensed on this network yet.</p>
-                                        <button className="co-action-btn co-retry-btn" onClick={() => openMint(null)}>
-                                            License the first agent
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-
-                        {!loading && !error && agents.length > 0 && displayed.length === 0 && (
-                            <tr>
-                                <td colSpan={8}>
-                                    <div className="co-empty">
-                                        <div className="co-empty-msg">No licenses under this principal — mint one.</div>
-                                        <p className="co-page-desc" style={{ margin: "0 auto" }}>The connected wallet answers for no licenses here yet. The full registry remains on the public record.</p>
-                                        <button className="co-action-btn co-retry-btn" onClick={() => openMint(null)}>
-                                            License an Agent
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-
-                        {!loading && !error && displayed.map((agent, i) => (
+                        {agents.map((agent, i) => (
                             <motion.tr 
                                 key={agent.licenseNo} 
                                 className={`co-tr ${agent.status === 'ghost' ? 'is-ghost' : ''}`}

@@ -4,17 +4,16 @@ import { navigateToVerify } from "../utils/path";
 
 interface EntryGateProps {
     onConnect: () => void;
-    onBrowse: () => void;
 }
 
-// Disconnected entry state (amendment to the registry scoping ruling):
-// a first-time visitor lands on what this place IS plus two clear actions —
-// connect a wallet, or look up one agent — never on a wall of other people's
-// licenses. The full public record is deleted from nothing and hidden from
-// no one: it stays one explicit click away behind the quiet browse link.
-// Ceremony law: this state renders no fake previews and no skeleton rows;
-// while it is on screen the page fetches nothing and pretends nothing.
-export default function EntryGate({ onConnect, onBrowse }: EntryGateProps) {
+// Disconnected entry state (FINAL RULING: wallet-scoped console): a visitor
+// lands on what this place IS plus exactly two actions, connect a wallet or
+// look up one agent by exact address. The console never enumerates the
+// record; the only public surface is /verify, reached deliberately by
+// look-up or deep link. Ceremony law: this state renders no fake previews
+// and no skeleton rows; while it is on screen the page fetches nothing and
+// pretends nothing.
+export default function EntryGate({ onConnect }: EntryGateProps) {
     const [lookupOpen, setLookupOpen] = useState(false);
     const [value, setValue] = useState("");
     const [invalid, setInvalid] = useState(false);
@@ -73,9 +72,6 @@ export default function EntryGate({ onConnect, onBrowse }: EntryGateProps) {
                 </form>
             )}
             {invalid && <div className="co-field-err">Not a valid agent address.</div>}
-            <button className="co-entry-browse" onClick={onBrowse}>
-                Browse the full registry
-            </button>
         </div>
     );
 }

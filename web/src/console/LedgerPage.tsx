@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { agentFixtures, FIXTURE_WALLET, flags, ledgerFixtures } from "./fixtures";
+import { agentFixtures, flags, ledgerFixtures } from "./fixtures";
 import { isFixtureMode } from "../chain/mode";
 import { fetchLedger, fetchRegistry } from "../chain/reads";
 import { explorerTx } from "../chain/deployment";
 import type { LedgerRow } from "../chain/types";
 import { kindColor } from "./PapersModal";
+import EntryGate from "./EntryGate";
 
 const TALLY: { kind: LedgerRow["kind"]; label: string }[] = [
     { kind: "licensed", label: "Licensed" },
@@ -16,10 +17,6 @@ const TALLY: { kind: LedgerRow["kind"]; label: string }[] = [
 ];
 
 const shortAddr = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
-
-// Mine-only matching key: fixture rows have no address (agent: null), so the
-// fixture key space is agent names; live rows key on lowercased addresses.
-const rowKey = (r: LedgerRow) => (isFixtureMode ? r.agentName : (r.agent ?? "").toLowerCase());
 
 const downloadFile = (name: string, mime: string, text: string) => {
     const url = URL.createObjectURL(new Blob([text], { type: mime }));
@@ -37,52 +34,68 @@ const csvEscape = (v: string | number | null) => {
 
 interface LedgerPageProps {
     connectedAddress: string | null;
+    onRequestConnect: () => void;
 }
 
-export default function LedgerPage({ connectedAddress }: LedgerPageProps) {
+// FINAL RULING (wallet-scoped console): the Ledger shows only verdicts
+// belonging to the connected principal's agents. Disconnected shows the
+// entry state and fetches nothing. The global court-record feed and the
+// optional mine-only toggle are deleted, not hidden; if the principal
+// mapping cannot be read, the page shows the explicit error state and
+// never falls back to the network-wide feed.
+export default function LedgerPage({ connectedAddress, onRequestConnect }: LedgerPageProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [rows, setRows] = useState<LedgerRow[]>([]);
     const [reloadKey, setReloadKey] = useState(0);
+    const gateActive = !connectedAddress;
 
     // Toolbar state. kindFilter empty = all kinds pass.
     const [kindFilter, setKindFilter] = useState<Set<LedgerRow["kind"]>>(new Set());
     const [query, setQuery] = useState("");
-    const [mineOnly, setMineOnly] = useState(false);
-    // Principal map for mine-only: null = not loaded yet. Failure is explicit.
-    const [mineKeys, setMineKeys] = useState<Set<string> | null>(null);
-    const [mineErr, setMineErr] = useState(false);
 
     useEffect(() => {
+        // Entry state fetches nothing: no data behind the curtain and no
+        // loading rows before a known result (ceremony law).
+        if (!connectedAddress) return;
+        const me = connectedAddress.toLowerCase();
         setLoading(true);
         setError(false);
-        setMineErr(false);
         if (isFixtureMode) {
+            // Sandbox rehearses the same law: fixture rows key on agent
+            // names (fixture rows carry no addresses), scoped through the
+            // fixture principal assignments.
             const timer = setTimeout(() => {
                 if (flags.forceError) {
                     setError(true);
                 } else {
-                    setRows(flags.forceEmpty ? [] : ledgerFixtures);
-                    const me = (connectedAddress ?? FIXTURE_WALLET).toLowerCase();
-                    setMineKeys(
-                        new Set(
-                            agentFixtures
-                                .filter((a) => a.principal && a.principal.toLowerCase() === me)
-                                .map((a) => a.name),
-                        ),
+                    const mine = new Set(
+                        agentFixtures
+                            .filter((a) => a.principal && a.principal.toLowerCase() === me)
+                            .map((a) => a.name),
+                    );
+                    setRows(
+                        flags.forceEmpty ? [] : ledgerFixtures.filter((r) => mine.has(r.agentName)),
                     );
                 }
                 setLoading(false);
             }, flags.loadDelayMs);
             return () => clearTimeout(timer);
         }
-        // Live: the network's whole court record in one batched scan.
-        // Failure is explicit — error card + retry, never a fixture fallback.
+        // Live: the registry ride-along maps agents to principals; the event
+        // scan is filtered through it before rows touch state. Either read
+        // failing is explicit — error card + retry, never a fixture fallback
+        // and never the unscoped feed.
         let cancelled = false;
-        fetchLedger()
-            .then((events) => {
+        Promise.all([fetchLedger(), fetchRegistry()])
+            .then(([events, agents]) => {
                 if (cancelled) return;
-                setRows(events);
+                const mine = new Set(
+                    agents
+                        .filter((a) => a.principal && a.principal.toLowerCase() === me)
+                        .map((a) => a.address.toLowerCase()),
+                );
+                setRows(events.filter((ev) => ev.agent && mine.has(ev.agent.toLowerCase())));
                 setLoading(false);
             })
             .catch(() => {
@@ -90,25 +103,6 @@ export default function LedgerPage({ connectedAddress }: LedgerPageProps) {
                 setError(true);
                 setLoading(false);
             });
-        // The registry ride-along maps agents to principals for mine-only.
-        // Its failure degrades the toggle explicitly, not the whole page.
-        if (connectedAddress) {
-            fetchRegistry()
-                .then((agents) => {
-                    if (cancelled) return;
-                    const me = connectedAddress.toLowerCase();
-                    setMineKeys(
-                        new Set(
-                            agents
-                                .filter((a) => a.principal && a.principal.toLowerCase() === me)
-                                .map((a) => a.address.toLowerCase()),
-                        ),
-                    );
-                })
-                .catch(() => {
-                    if (!cancelled) setMineErr(true);
-                });
-        }
         return () => {
             cancelled = true;
         };
@@ -133,22 +127,20 @@ export default function LedgerPage({ connectedAddress }: LedgerPageProps) {
             !r.detail.toLowerCase().includes(q)
         )
             return false;
-        if (mineOnly && mineKeys !== null && !mineKeys.has(rowKey(r))) return false;
         return true;
     });
     const display = [...filtered].reverse(); // newest verdict first
     const tally = (kind: LedgerRow["kind"]) => rows.filter((r) => r.kind === kind).length;
-    const hasActiveFilters = kindFilter.size > 0 || q !== "" || mineOnly;
 
     const clearFilters = () => {
         setKindFilter(new Set());
         setQuery("");
-        setMineOnly(false);
     };
 
     const stamp = () => new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
 
-    // Exports serialize the FILTERED view — what you see is what you save.
+    // Exports serialize the FILTERED view of the scoped record — what you
+    // see is what you save, never another principal's rows.
     const exportJson = () => {
         downloadFile(
             `haetae-ledger-${stamp()}.json`,
@@ -189,25 +181,14 @@ export default function LedgerPage({ connectedAddress }: LedgerPageProps) {
             <div className="co-page-header">
                 <h1 className="co-page-title font-display">The Ledger</h1>
                 <p className="co-page-desc">
-                    The network's full court record — every license, verdict, and trade, from the deploy
-                    block forward.
+                    This wallet's court record: every license, verdict, and trade for its agents,
+                    from the deploy block forward.
                 </p>
             </div>
 
-            {loading && (
-                <div className="co-ledger-wrap" aria-hidden>
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="co-ledger-row">
-                            <div className="co-skel" style={{ width: 90, height: 12 }} />
-                            <div className="co-skel" style={{ width: 140, height: 14 }} />
-                            <div className="co-skel" style={{ width: "70%", height: 14 }} />
-                            <div className="co-skel" style={{ width: 80, height: 12 }} />
-                        </div>
-                    ))}
-                </div>
-            )}
+            {gateActive && <EntryGate onConnect={onRequestConnect} />}
 
-            {!loading && error && (
+            {!gateActive && !loading && error && (
                 <div className="co-empty">
                     <div className="co-empty-msg" style={{ color: "var(--vermillion)" }}>Ledger Unreachable</div>
                     <p className="co-page-desc" style={{ margin: "0 auto" }}>The chain is not responding. Check your connection.</p>
@@ -217,14 +198,14 @@ export default function LedgerPage({ connectedAddress }: LedgerPageProps) {
                 </div>
             )}
 
-            {!loading && !error && rows.length === 0 && (
+            {!gateActive && !loading && !error && rows.length === 0 && (
                 <div className="co-empty">
-                    <div className="co-empty-msg">No verdicts on record.</div>
-                    <p className="co-page-desc" style={{ margin: "0 auto" }}>The court has not spoken on this network yet.</p>
+                    <div className="co-empty-msg">No verdicts on this wallet's record yet.</div>
+                    <p className="co-page-desc" style={{ margin: "0 auto" }}>The court has not spoken on your agents yet.</p>
                 </div>
             )}
 
-            {!loading && !error && rows.length > 0 && (
+            {!gateActive && !loading && !error && rows.length > 0 && (
                 <>
                     <div className="co-ledger-tools">
                         <input
@@ -235,15 +216,6 @@ export default function LedgerPage({ connectedAddress }: LedgerPageProps) {
                             aria-label="Search the ledger"
                             spellCheck={false}
                         />
-                        {connectedAddress && (
-                            <button
-                                className={`co-chip ${mineOnly ? "is-on" : ""}`}
-                                aria-pressed={mineOnly}
-                                onClick={() => setMineOnly((v) => !v)}
-                            >
-                                Mine only
-                            </button>
-                        )}
                         <button className="co-chip" onClick={() => setReloadKey((k) => k + 1)}>
                             Refresh
                         </button>
@@ -256,13 +228,7 @@ export default function LedgerPage({ connectedAddress }: LedgerPageProps) {
                         </button>
                     </div>
 
-                    {mineOnly && mineErr && (
-                        <p className="co-field-err" style={{ marginBottom: 14 }}>
-                            Principal map unreachable — “mine only” cannot be applied right now.
-                        </p>
-                    )}
-
-                    {/* Tally chips double as kind filters: count = whole record, press = filter the view. */}
+                    {/* Tally chips double as kind filters: count = the wallet's record, press = filter the view. */}
                     <div className="co-tally">
                         {TALLY.map((t) => {
                             const n = tally(t.kind);

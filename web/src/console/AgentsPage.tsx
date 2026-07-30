@@ -25,6 +25,14 @@ interface AgentsPageProps {
 // where you come to actually read the address — but still overflow-safe.
 const dossierAddr = (a: string) => `${a.slice(0, 18)}…${a.slice(-6)}`;
 
+// FINAL RULING (wallet-scoped console): dossiers render only for the
+// connected principal's agents. Disconnected shows the entry state and
+// fetches nothing; the global dossier grid is deleted, not hidden.
+const scopedTo = (rows: AgentLicense[], me: string) => {
+    const key = me.toLowerCase();
+    return rows.filter((a) => a.principal && a.principal.toLowerCase() === key);
+};
+
 export default function AgentsPage({ connectedAddress, onRequestConnect }: AgentsPageProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -33,14 +41,7 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
     const [activityError, setActivityError] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
     const refetchSeqRef = useRef(0);
-    // Amendment to the scoping ruling: disconnected visitors land on the
-    // entry state; the full dossier grid sits one explicit click away.
-    const [browsePublic, setBrowsePublic] = useState(false);
-    useEffect(() => {
-        // A disconnect returns the page to the entry state, not the record.
-        if (!connectedAddress) setBrowsePublic(false);
-    }, [connectedAddress]);
-    const gateActive = !connectedAddress && !browsePublic;
+    const gateActive = !connectedAddress;
 
     const [papersAgent, setPapersAgent] = useState<AgentLicense | null>(null);
     const [papersOpener, setPapersOpener] = useState<HTMLElement | null>(null);
@@ -53,20 +54,22 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
     const [relicenseAgent, setRelicenseAgent] = useState<AgentLicense | null>(null);
 
     useEffect(() => {
-        // Entry state fetches nothing: no data dump behind the curtain and no
-        // skeleton cards pretending to be content (ceremony law).
-        if (gateActive) return;
+        // Entry state fetches nothing: no data behind the curtain and no
+        // loading cards before a known result (ceremony law).
+        if (!connectedAddress) return;
         refetchSeqRef.current++;
         setLoading(true);
         setError(false);
         setActivityError(false);
         setActivity(null);
         if (isFixtureMode) {
+            // Sandbox rehearses the same law: the fixture wallet is the
+            // principal, and only its dossiers exist on this surface.
             const timer = setTimeout(() => {
                 if (flags.forceError) {
                     setError(true);
                 } else {
-                    setAgents(flags.forceEmpty ? [] : agentFixtures);
+                    setAgents(flags.forceEmpty ? [] : scopedTo(agentFixtures, connectedAddress));
                     const map = new Map<string, Activity>();
                     for (const ev of ledgerFixtures) {
                         const cur = map.get(ev.agentName);
@@ -81,7 +84,8 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
             }, flags.loadDelayMs);
             return () => clearTimeout(timer);
         }
-        // Live: dossiers require the registry. The activity line degrades
+        // Live: dossiers require the registry, scoped to the connected
+        // principal before rows touch state. The activity line degrades
         // EXPLICITLY (never silently) if the event scan fails — the card
         // says "record unavailable" in vermillion rather than pretending
         // the agent has no history.
@@ -89,7 +93,7 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
         fetchRegistry()
             .then((rows) => {
                 if (cancelled) return;
-                setAgents(rows);
+                setAgents(scopedTo(rows, connectedAddress));
                 setLoading(false);
             })
             .catch(() => {
@@ -118,7 +122,7 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
         return () => {
             cancelled = true;
         };
-    }, [reloadKey, gateActive]);
+    }, [reloadKey, connectedAddress]);
 
     const activityFor = (agent: AgentLicense): Activity | null => {
         if (!activity) return null;
@@ -133,13 +137,13 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
     // Same ghost-clamp discipline as Registry: a lagging replica must never
     // resurrect a locally ghosted dossier (revocation is terminal on-chain).
     const silentRefetch = () => {
-        if (isFixtureMode) return;
+        if (isFixtureMode || !connectedAddress) return;
         const seq = ++refetchSeqRef.current;
         fetchRegistry()
             .then((rows) => {
                 if (seq !== refetchSeqRef.current) return;
                 setAgents((prev) =>
-                    rows.map((r) => {
+                    scopedTo(rows, connectedAddress).map((r) => {
                         const local = prev.find((p) => p.licenseNo === r.licenseNo);
                         return local?.status === "ghost" && r.status !== "ghost"
                             ? { ...r, status: "ghost" as const }
@@ -165,7 +169,7 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
         setPolicyAgent(agent);
     };
     const openMint = (relicense: AgentLicense | null) => {
-        if (!isFixtureMode && !connectedAddress) {
+        if (!connectedAddress) {
             onRequestConnect();
             return;
         }
@@ -230,22 +234,15 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
         );
     };
 
-    const canOperate = (agent: AgentLicense) =>
-        agent.status !== "ghost" &&
-        (isFixtureMode ||
-            (!!connectedAddress &&
-                !!agent.principal &&
-                connectedAddress.toLowerCase() === agent.principal.toLowerCase()));
+    // Every dossier on this surface belongs to the connected principal by
+    // construction; ghost is the only gate on the owner ceremonies.
+    const canOperate = (agent: AgentLicense) => agent.status !== "ghost";
 
     const canRelicense = (agent: AgentLicense) =>
         agent.status === "ghost" &&
         !agents.some(
             (a) => a.status === "licensed" && a.address.toLowerCase() === agent.address.toLowerCase(),
-        ) &&
-        (isFixtureMode ||
-            (!!connectedAddress &&
-                !!agent.principal &&
-                connectedAddress.toLowerCase() === agent.principal.toLowerCase()));
+        );
 
     return (
         <motion.div
@@ -257,26 +254,11 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
             <div className="co-page-header">
                 <h1 className="co-page-title font-display">The Agents</h1>
                 <p className="co-page-desc">
-                    Every dossier binds an autonomous agent to the human principal who answers for it.
+                    Each dossier binds one of your agents to the human principal who answers for it.
                 </p>
             </div>
 
-            {gateActive && (
-                <EntryGate onConnect={onRequestConnect} onBrowse={() => setBrowsePublic(true)} />
-            )}
-
-            {!gateActive && loading && (
-                <div className="co-agent-grid" aria-hidden>
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="co-agent-card">
-                            <div className="co-skel" style={{ width: "60%", height: 22 }} />
-                            <div className="co-skel" style={{ width: "45%", height: 13 }} />
-                            <div className="co-skel" style={{ width: "100%", height: 72 }} />
-                            <div className="co-skel" style={{ width: "70%", height: 13 }} />
-                        </div>
-                    ))}
-                </div>
-            )}
+            {gateActive && <EntryGate onConnect={onRequestConnect} />}
 
             {!gateActive && !loading && error && (
                 <div className="co-empty">
@@ -290,10 +272,9 @@ export default function AgentsPage({ connectedAddress, onRequestConnect }: Agent
 
             {!gateActive && !loading && !error && agents.length === 0 && (
                 <div className="co-empty">
-                    <div className="co-empty-msg">The ledger is empty.</div>
-                    <p className="co-page-desc" style={{ margin: "0 auto" }}>No agents have been licensed on this network yet.</p>
+                    <div className="co-empty-msg">No agents licensed to this wallet yet.</div>
                     <button className="co-action-btn co-retry-btn" onClick={() => openMint(null)}>
-                        License the first agent
+                        License an Agent
                     </button>
                 </div>
             )}

@@ -93,7 +93,9 @@ export default function ConsoleApp() {
                         <AgentsPage key="agents" connectedAddress={address} onRequestConnect={openConnect} />
                     )}
                     {view === "standard" && <StandardPage key="standard" />}
-                    {view === "ledger" && <LedgerPage key="ledger" connectedAddress={address} />}
+                    {view === "ledger" && (
+                        <LedgerPage key="ledger" connectedAddress={address} onRequestConnect={openConnect} />
+                    )}
                 </AnimatePresence>
             </main>
 
